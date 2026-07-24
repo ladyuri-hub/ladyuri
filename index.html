@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026학년도 2학기 학부모 상담 일정 신청 및 관리 시스템</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Noto Sans KR) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'sans-serif'],
+                    },
+                    colors: {
+                        navy: {
+                            50: '#f0f4f8',
+                            100: '#d9e2ec',
+                            600: '#10355e',
+                            700: '#0c2847',
+                            800: '#081a30',
+                        },
+                        school: {
+                            blue: '#1d4ed8',
+                            gold: '#d97706',
+                            emerald: '#059669',
+                            rose: '#e11d48'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        @media print {
+            header, footer, .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-blue-200 selection:text-blue-900">
+
+    <!-- Header Navigation -->
+    <header class="bg-navy-700 text-white shadow-lg sticky top-0 z-30 border-b border-navy-600 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-500 to-emerald-400 flex items-center justify-center text-white shadow-md">
+                    <i class="fa-solid fa-graduation-cap text-xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-amber-400 text-navy-800 text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider">2학기 정기</span>
+                        <span class="text-xs text-slate-300">교무부 안내</span>
+                    </div>
+                    <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white">2026학년도 학부모 상담주간 일정 시스템</h1>
+                </div>
+            </div>
+
+            <!-- Action buttons header -->
+            <div class="flex items-center space-x-2 text-sm">
+                <button onclick="window.openShareModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg transition flex items-center space-x-1.5 shadow-sm font-medium">
+                    <i class="fa-solid fa-share-nodes"></i>
+                    <span>학부모용 안내문/링크 공유</span>
+                </button>
+
+                <button onclick="openLookupModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-lg border border-slate-600 transition flex items-center space-x-1.5 shadow-sm">
+                    <i class="fa-solid fa-magnifying-glass text-blue-400"></i>
+                    <span class="font-medium">내 예약 조회/변경</span>
+                </button>
+                
+                <button id="adminToggleBtn" onclick="window.toggleAdminBtnClick()" class="bg-amber-500/20 border border-amber-400/40 hover:bg-amber-500/30 text-amber-200 px-3 py-2 rounded-lg transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-user-shield text-amber-400"></i>
+                    <span id="adminBtnText" class="font-medium">담임 모드</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Class Selection & Class Download Bar -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3 no-print">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-2">
+                    <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1.5 rounded-lg flex items-center">
+                        <i class="fa-solid fa-school mr-1.5 text-blue-600"></i> 학급 바로가기
+                    </span>
+                    <h2 id="currentClassTitleHeader" class="text-base font-bold text-slate-900">1학년 1반 학부모 상담 보드</h2>
+                    <span id="classHomeroomBadge" class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium">학부모 모드</span>
+                </div>
+                
+                <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                    <button onclick="downloadClassHtmlTemplate()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs px-3.5 py-2 rounded-xl transition font-bold flex items-center space-x-1.5 shadow-sm">
+                        <i class="fa-solid fa-file-arrow-down text-sm"></i>
+                        <span>현재 학급용 Web 파일 다운로드</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Dynamic Class Selector Tabs -->
+            <div class="flex flex-wrap items-center gap-1.5" id="classTabsContainer">
+                <!-- Populated dynamically by JS -->
+            </div>
+        </div>
+
+        <!-- Top Announcement & Notice Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 no-print">
+            
+            <!-- School Notice Banner -->
+            <div class="lg:col-span-2 bg-white rounded-2xl p-5 shadow-sm border border-slate-200 relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute -right-6 -bottom-6 opacity-5 text-blue-900 pointer-events-none">
+                    <i class="fa-solid fa-comments text-9xl"></i>
+                </div>
+                
+                <div>
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                                <i class="fa-solid fa-bullhorn mr-1.5 text-blue-600"></i> 교무부장 안내문
+                            </span>
+                            <span class="text-xs text-slate-600 font-medium">상담 주간: 2026. 09. 07(월) ~ 09. 11(금)</span>
+                        </div>
+                        <span class="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-md">선착순 실시간 매칭</span>
+                    </div>
+
+                    <h2 class="text-lg font-bold text-slate-900 mb-2">2학기 학부모 개별 상담 희망 시간 신청 안내</h2>
+                    
+                    <!-- Application Period Highlight Card -->
+                    <div class="mb-3.5 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl flex flex-wrap justify-between items-center gap-2">
+                        <div class="flex items-center space-x-2 text-xs font-bold text-blue-900">
+                            <i class="fa-regular fa-calendar-check text-blue-600 text-sm"></i>
+                            <span>[사전 신청 기간] 2026년 8월 31일(월) 09:00 ~ 9월 4일(금) 18:00 (5일간)</span>
+                        </div>
+                        <span class="bg-emerald-600 text-white text-[11px] px-2.5 py-0.5 rounded-full font-bold flex items-center shadow-sm">
+                            <span class="w-1.5 h-1.5 rounded-full bg-white mr-1.5 animate-pulse"></span>신청 접수 진행중
+                        </span>
+                    </div>
+
+                    <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                        학생의 가정생활 및 학교생활, 성적, 진로에 대해 대화를 나누고자 합니다. 
+                        <strong>14:30부터 16:30까지 15분 단위</strong>로 진행되며 선착순 접수됩니다. 
+                        신청 정보는 타인에게 비공개 처리되며 담임교사만 확인 가능합니다.
+                    </p>
+
+                    <div class="flex flex-wrap gap-3.5 text-xs font-medium text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <div class="flex items-center text-slate-700">
+                            <i class="fa-solid fa-calendar-days text-amber-600 mr-1.5"></i> 신청 기간: 8.31(월) 09:00 ~ 9.04(금) 18:00
+                        </div>
+                        <div class="flex items-center text-slate-700">
+                            <i class="fa-solid fa-clock text-blue-600 mr-1.5"></i> 상담 시간: 15분 소요
+                        </div>
+                        <div class="flex items-center text-slate-700">
+                            <i class="fa-solid fa-building-user text-emerald-600 mr-1.5"></i> 상담 방식: 방문 / 전화 상담 선택
+                        </div>
+                        <div class="flex items-center text-slate-700">
+                            <i class="fa-solid fa-user-shield text-purple-600 mr-1.5"></i> 개인정보 보호: 타인에게 [비공개] 처리
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Status & Notice Broadcaster -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center">
+                            <i class="fa-solid fa-bell text-amber-500 mr-2"></i> 실시간 변경/공지 게시판
+                        </h3>
+                        <button id="addNoticeBtn" onclick="openAddNoticeModal()" class="hidden text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-2 py-1 rounded font-medium transition">
+                            + 공지 등록
+                        </button>
+                    </div>
+
+                    <!-- Scrollable Notice List -->
+                    <div id="noticeList" class="space-y-2.5 max-h-[170px] overflow-y-auto custom-scrollbar pr-1">
+                        <!-- Dynamic Notices inserted here -->
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                    <span id="syncStatus" class="flex items-center">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+                        실시간 데이터 동기화 완료
+                    </span>
+                    <button onclick="refreshData()" class="text-slate-600 hover:text-slate-800 flex items-center transition">
+                        <i class="fa-solid fa-rotate mr-1"></i> 새로고침
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Stats KPI Bar & Filters -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 no-print">
+            
+            <!-- Reservation KPI Badge Group -->
+            <div class="flex items-center space-x-6 w-full md:w-auto justify-around md:justify-start">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500">전체 상담 슬롯</div>
+                        <div class="text-lg font-extrabold text-slate-800" id="statTotalSlots">40개</div>
+                    </div>
+                </div>
+
+                <div class="h-8 w-px bg-slate-200"></div>
+
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500">신청 완료</div>
+                        <div class="text-lg font-extrabold text-emerald-600" id="statReservedSlots">0개</div>
+                    </div>
+                </div>
+
+                <div class="h-8 w-px bg-slate-200"></div>
+
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500">신청 가능</div>
+                        <div class="text-lg font-extrabold text-amber-600" id="statAvailableSlots">40개</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legend & Quick Search -->
+            <div class="flex items-center space-x-3 w-full md:w-auto justify-end">
+                <div class="flex items-center space-x-4 text-xs font-medium text-slate-600">
+                    <span class="flex items-center">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500 mr-1.5 inline-block"></span> 신청 가능
+                    </span>
+                    <span class="flex items-center">
+                        <span class="w-3 h-3 rounded-full bg-slate-300 mr-1.5 inline-block"></span> 예약 완료
+                    </span>
+                    <span class="flex items-center">
+                        <span class="w-3 h-3 rounded-full bg-rose-400 mr-1.5 inline-block"></span> 상담 불가(닫힘)
+                    </span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Weekly Time Slot Board -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-4 bg-slate-100/70 border-b border-slate-200 flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-base flex items-center">
+                    <i class="fa-regular fa-calendar-days text-blue-600 mr-2"></i> 상담 희망 일시 선택 (월~금요일 14:30 ~ 16:30)
+                </h3>
+                <span class="text-xs text-slate-500 hidden sm:inline">원하는 시간대의 [시간 선택] 버튼을 누르시면 입력창이 뜹니다.</span>
+            </div>
+
+            <!-- Desktop & Responsive Grid Container -->
+            <div class="overflow-x-auto custom-scrollbar">
+                <div class="min-w-[900px] grid grid-cols-5 divide-x divide-slate-200 bg-slate-50">
+                    
+                    <!-- Monday Column -->
+                    <div class="col-span-1">
+                        <div class="bg-blue-900 text-white p-3 text-center border-b border-blue-950">
+                            <div class="text-xs opacity-80 font-medium">9월 7일</div>
+                            <div class="text-base font-bold">월요일 (Mon)</div>
+                        </div>
+                        <div class="p-2 space-y-2" id="day-0"></div>
+                    </div>
+
+                    <!-- Tuesday Column -->
+                    <div class="col-span-1">
+                        <div class="bg-blue-900 text-white p-3 text-center border-b border-blue-950">
+                            <div class="text-xs opacity-80 font-medium">9월 8일</div>
+                            <div class="text-base font-bold">화요일 (Tue)</div>
+                        </div>
+                        <div class="p-2 space-y-2" id="day-1"></div>
+                    </div>
+
+                    <!-- Wednesday Column -->
+                    <div class="col-span-1">
+                        <div class="bg-blue-900 text-white p-3 text-center border-b border-blue-950">
+                            <div class="text-xs opacity-80 font-medium">9월 9일</div>
+                            <div class="text-base font-bold">수요일 (Wed)</div>
+                        </div>
+                        <div class="p-2 space-y-2" id="day-2"></div>
+                    </div>
+
+                    <!-- Thursday Column -->
+                    <div class="col-span-1">
+                        <div class="bg-blue-900 text-white p-3 text-center border-b border-blue-950">
+                            <div class="text-xs opacity-80 font-medium">9월 10일</div>
+                            <div class="text-base font-bold">목요일 (Thu)</div>
+                        </div>
+                        <div class="p-2 space-y-2" id="day-3"></div>
+                    </div>
+
+                    <!-- Friday Column -->
+                    <div class="col-span-1">
+                        <div class="bg-blue-900 text-white p-3 text-center border-b border-blue-950">
+                            <div class="text-xs opacity-80 font-medium">9월 11일</div>
+                            <div class="text-base font-bold">금요일 (Fri)</div>
+                        </div>
+                        <div class="p-2 space-y-2" id="day-4"></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Control Panel (Visible in Admin Mode) -->
+        <div id="adminPanel" class="hidden bg-slate-900 text-slate-100 rounded-2xl p-6 shadow-xl border border-slate-800 space-y-4">
+            <div class="flex flex-wrap justify-between items-center border-b border-slate-800 pb-3 gap-3">
+                <div class="flex items-center space-x-2">
+                    <span class="bg-amber-500 text-slate-950 font-bold text-xs px-2 py-1 rounded">담임/관리자 모드</span>
+                    <h3 class="text-base font-bold text-white"><span id="adminPanelClassTitle">1학년 1반</span> 전체 상담 신청 현황 대장</h3>
+                </div>
+                <div class="flex items-center space-x-2 flex-wrap gap-2">
+                    <button onclick="window.changeAdminPassword()" class="bg-slate-700 hover:bg-slate-600 text-amber-300 text-xs px-3 py-1.5 rounded-lg transition font-medium border border-slate-600">
+                        <i class="fa-solid fa-key mr-1"></i> 담임 비번 변경
+                    </button>
+                    <button onclick="exportToCsv()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium">
+                        <i class="fa-solid fa-file-excel mr-1"></i> 명단 Excel(CSV) 다운로드
+                    </button>
+                    <button onclick="window.printTeacherRoster()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium">
+                        <i class="fa-solid fa-print mr-1"></i> 상담 명단 인쇄
+                    </button>
+                    <button onclick="resetAllSlots()" class="bg-rose-600/80 hover:bg-rose-600 text-white text-xs px-3 py-1.5 rounded-lg transition font-medium">
+                        <i class="fa-solid fa-trash-can mr-1"></i> 학급 데이터 초기화
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table of all reservations -->
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-xs text-left text-slate-300">
+                    <thead class="text-xs uppercase bg-slate-800 text-slate-400">
+                        <tr>
+                            <th class="px-3 py-2.5">일시</th>
+                            <th class="px-3 py-2.5">학생 이름</th>
+                            <th class="px-3 py-2.5">학년/반</th>
+                            <th class="px-3 py-2.5">보호자 관계</th>
+                            <th class="px-3 py-2.5">연락처</th>
+                            <th class="px-3 py-2.5">상담 형태</th>
+                            <th class="px-3 py-2.5">주요 상담 희망 분야</th>
+                            <th class="px-3 py-2.5 text-center">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody" class="divide-y divide-slate-800">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal 1: Reservation Input Modal -->
+    <div id="bookingModal" onclick="if(event.target === this) closeBookingModal()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 transform transition-all">
+            
+            <div class="bg-gradient-to-r from-navy-700 to-blue-800 text-white px-6 py-4 flex justify-between items-center">
+                <div>
+                    <span class="text-xs text-blue-200 font-medium">2학기 상담 신청</span>
+                    <h3 class="text-lg font-bold" id="modalSlotTitle">9월 7일(월) 14:30 - 14:45</h3>
+                </div>
+                <button type="button" onclick="closeBookingModal()" class="text-blue-200 hover:text-white text-xl p-1 rounded-lg hover:bg-white/10 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="bookingForm" onsubmit="handleBookingSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="modalSlotId">
+
+                <!-- Student Info -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">학생 이름 <span class="text-rose-500">*</span></label>
+                        <input type="text" id="inputStudentName" required placeholder="예: 김철수"
+                               class="w-full text-sm px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">학년 / 반 <span class="text-rose-500">*</span></label>
+                        <input type="text" id="inputGradeClass" required placeholder="예: 1학년 1반"
+                               class="w-full text-sm px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50" readonly>
+                    </div>
+                </div>
+
+                <!-- Relationship & Contact -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">학생과의 관계 <span class="text-rose-500">*</span></label>
+                        <select id="inputRelation" required class="w-full text-sm px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+                            <option value="모">모 (어머니)</option>
+                            <option value="부">부 (아버지)</option>
+                            <option value="조부모">조부모</option>
+                            <option value="기타 보호자">기타 보호자</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">연락받을 연락처 <span class="text-rose-500">*</span></label>
+                        <input type="tel" id="inputPhone" required placeholder="010-0000-0000" pattern="[0-9]{2,3}-[0-9]{3,4}-[0-9]{4}"
+                               class="w-full text-sm px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Consultation Type & Topic -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">상담 방식 선택 <span class="text-rose-500">*</span></label>
+                        <select id="inputConsultType" required class="w-full text-sm px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+                            <option value="대면(방문) 상담">학교 방문 상담</option>
+                            <option value="비대면(전화) 상담">전화 상담</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                            <span>주요 상담 희망 분야 <span class="text-blue-600 font-normal">(중복 선택 가능)</span></span>
+                        </label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
+                            <label class="flex items-center space-x-1.5 cursor-pointer hover:text-blue-600 py-1">
+                                <input type="checkbox" name="inputTopic" value="학교 생활 및 교우관계" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4">
+                                <span>학교 생활/교우관계</span>
+                            </label>
+                            <label class="flex items-center space-x-1.5 cursor-pointer hover:text-blue-600 py-1">
+                                <input type="checkbox" name="inputTopic" value="성적 및 학업 지도" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4">
+                                <span>성적 및 학업 지도</span>
+                            </label>
+                            <label class="flex items-center space-x-1.5 cursor-pointer hover:text-blue-600 py-1">
+                                <input type="checkbox" name="inputTopic" value="진로 및 진학 상담" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4">
+                                <span>진로 및 진학 상담</span>
+                            </label>
+                            <label class="flex items-center space-x-1.5 cursor-pointer hover:text-blue-600 py-1">
+                                <input type="checkbox" name="inputTopic" value="성격 및 생활 습관" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4">
+                                <span>성격 및 생활 습관</span>
+                            </label>
+                            <label class="flex items-center space-x-1.5 cursor-pointer hover:text-blue-600 py-1">
+                                <input type="checkbox" name="inputTopic" value="기타 안건" class="rounded text-blue-600 focus:ring-blue-500 w-4 h-4">
+                                <span>기타 안건</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PIN Password -->
+                <div class="bg-amber-50 p-3 rounded-xl border border-amber-200">
+                    <label class="block text-xs font-bold text-amber-900 mb-1">
+                        <i class="fa-solid fa-key text-amber-600 mr-1"></i> 예약 확인/취소용 비밀번호 (숫자 4자리) <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="password" id="inputPin" maxlength="4" pattern="[0-9]{4}" required placeholder="예: 1234"
+                           class="w-full text-sm px-3 py-2 rounded-xl border border-amber-300 focus:ring-2 focus:ring-amber-500 focus:outline-none bg-white">
+                    <p class="text-[11px] text-amber-700 mt-1">※ 향후 본인이 예약을 변경하거나 취소할 때 필요한 4자리 번호입니다.</p>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex justify-end space-x-2 pt-2 border-t border-slate-100">
+                    <button type="button" onclick="closeBookingModal()" class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                        취소
+                    </button>
+                    <button type="submit" class="px-5 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition">
+                        선착순 예약 완료하기
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <!-- Modal 2: Lookup / Cancellation Modal -->
+    <div id="lookupModal" onclick="if(event.target === this) closeLookupModal()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100">
+            
+            <div class="bg-slate-800 text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="text-base font-bold flex items-center">
+                    <i class="fa-solid fa-clipboard-check text-blue-400 mr-2"></i> 내 예약 조회 / 변경 / 취소
+                </h3>
+                <button type="button" onclick="closeLookupModal()" class="text-slate-400 hover:text-white text-xl p-1 rounded-lg hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div id="lookupFormArea">
+                    <p class="text-xs text-slate-600 mb-3">신청 시 입력하셨던 학생 이름과 4자리 비밀번호를 입력해주세요.</p>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">학생 이름</label>
+                            <input type="text" id="lookupStudentName" placeholder="예: 김철수"
+                                   class="w-full text-sm px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">비밀번호 (4자리)</label>
+                            <input type="password" id="lookupPin" maxlength="4" placeholder="••••"
+                                   class="w-full text-sm px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+                        <button onclick="performLookup()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl transition">
+                            예약 내역 조회하기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lookup Result Cards -->
+                <div id="lookupResultArea" class="hidden space-y-4">
+                    <div id="lookupCard" class="bg-blue-50/60 p-4 rounded-xl border border-blue-200 text-xs space-y-2 text-slate-700">
+                        <!-- Populated by lookup -->
+                    </div>
+
+                    <div class="flex space-x-2 pt-2">
+                        <button onclick="window.cancelUserBooking()" class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition">
+                            <i class="fa-solid fa-circle-xmark mr-1"></i> 예약 취소하기
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal 3: Share Parent Link & Announcement Modal -->
+    <div id="shareModal" onclick="if(event.target === this) window.closeShareModal()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100">
+            <div class="bg-emerald-700 text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="text-base font-bold flex items-center">
+                    <i class="fa-solid fa-share-nodes mr-2"></i> 학부모 전용 공유 및 알림 문구
+                </h3>
+                <button type="button" onclick="window.closeShareModal()" class="text-emerald-200 hover:text-white text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-xs text-slate-600">아래 안내문을 복사하여 학교 알리미, 가정통신문, 카카오톡 학부모 단톡방 등에 발송하세요.</p>
+                <textarea id="shareNoticeText" rows="7" class="w-full text-xs p-3 rounded-xl border border-slate-300 bg-slate-50 focus:outline-none custom-scrollbar" readonly></textarea>
+                <div class="flex space-x-2">
+                    <button onclick="window.copyShareNotice()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center justify-center space-x-2">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>안내문 전체 복사하기</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 4: Notice Creation Modal (Admin) -->
+    <div id="addNoticeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div class="bg-amber-600 text-white px-5 py-3 flex justify-between items-center">
+                <h3 class="font-bold text-sm"><i class="fa-solid fa-bullhorn mr-2"></i> 새로운 안내/공지 등록</h3>
+                <button onclick="closeAddNoticeModal()" class="text-amber-100 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-5 space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">공지사항 내용</label>
+                    <textarea id="newNoticeText" rows="3" placeholder="예: [안내] 9월 8일(화) 15:00 상담 취소표가 새로 생성되었습니다."
+                              class="w-full text-xs p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button onclick="closeAddNoticeModal()" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg">취소</button>
+                    <button onclick="submitNotice()" class="px-4 py-1.5 text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg">등록하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 5: Admin Auth Modal -->
+    <div id="adminAuthModal" onclick="if(event.target === this) window.closeAdminAuthModal()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border border-slate-100">
+            <div class="bg-amber-600 text-white px-5 py-3.5 flex justify-between items-center">
+                <h3 class="font-bold text-sm flex items-center">
+                    <i class="fa-solid fa-user-shield mr-2"></i> 담임 모드 비밀번호 인증
+                </h3>
+                <button type="button" onclick="window.closeAdminAuthModal()" class="text-amber-100 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4">
+                <p class="text-xs text-slate-600">담임교사 전용 비밀번호를 입력해주세요.<br><span class="text-slate-400 text-[11px]">(초기 비밀번호: <strong>1234</strong>)</span></p>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">비밀번호</label>
+                    <input type="password" id="adminPasswordInput" placeholder="••••" onkeydown="if(event.key==='Enter') window.verifyAdminPassword()"
+                           class="w-full text-sm px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                </div>
+                <div class="flex justify-end space-x-2 pt-1">
+                    <button type="button" onclick="window.closeAdminAuthModal()" class="px-3.5 py-2 text-xs text-slate-600 hover:bg-slate-100 rounded-xl transition">취소</button>
+                    <button type="button" onclick="window.verifyAdminPassword()" class="px-4 py-2 text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl shadow-md transition">로그인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Toast Notifications Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-6 mt-10 border-t border-slate-800 no-print">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-1">
+            <p class="font-medium text-slate-300">2026학년도 2학기 학부모 상담주간 운영 시스템 (교무부)</p>
+            <p class="text-slate-500">실시간선착순 매칭 및 자동 개인정보 보호 블랭크 기술이 적용되었습니다.</p>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Modal Control Functions
+        window.closeBookingModal = function() {
+            const modal = document.getElementById('bookingModal');
+            if (modal) modal.classList.add('hidden');
+        };
+
+        window.openLookupModal = function(studentName = '') {
+            if (studentName && typeof studentName === 'string') {
+                const input = document.getElementById('lookupStudentName');
+                if (input) input.value = studentName;
+            }
+            document.getElementById('lookupFormArea')?.classList.remove('hidden');
+            document.getElementById('lookupResultArea')?.classList.add('hidden');
+            document.getElementById('lookupModal')?.classList.remove('hidden');
+        };
+
+        window.closeLookupModal = function() {
+            const modal = document.getElementById('lookupModal');
+            if (modal) modal.classList.add('hidden');
+        };
+
+        window.openShareModal = function() {
+            const shareText = `[2026학년도 2학기 ${currentClass} 학부모 상담주간 신청 안내]\n\n` +
+                `안녕하십니까, ${currentClass} 담임교사입니다.\n` +
+                `학생의 성장과 학교생활에 관한 학부모 개별 상담을 아래와 같이 실시합니다.\n\n` +
+                `1. 상담 주간: 2026년 9월 7일(월) ~ 9월 11일(금)\n` +
+                `2. 신청 기간: 2026년 8월 31일(월) 09:00 ~ 9월 4일(금) 18:00\n` +
+                `3. 상담 시간: 14:30 ~ 16:30 (15분 단위, 선착순 신청)\n` +
+                `4. 신청 방법: 아래 시스템 링크에서 원하시는 시간을 선택하여 신청\n` +
+                `※ 타인에게는 신청 정보가 [비공개] 처리되오니 편안하게 신청해주시기 바랍니다.`;
+            
+            document.getElementById('shareNoticeText').value = shareText;
+            document.getElementById('shareModal').classList.remove('hidden');
+        };
+
+        window.closeShareModal = function() {
+            document.getElementById('shareModal').classList.add('hidden');
+        };
+
+        window.copyShareNotice = function() {
+            const text = document.getElementById('shareNoticeText').value;
+            const tempTextArea = document.createElement("textarea");
+            tempTextArea.value = text;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextArea);
+            showToast("안내문이 클립보드에 복사되었습니다! 카카오톡이나 알리미에 붙여넣기 하세요.", "success");
+        };
+
+        // Modal opening & verification for Admin Mode
+        window.toggleAdminBtnClick = function() {
+            if (!isAdmin) {
+                window.openAdminAuthModal();
+            } else {
+                window.exitAdminMode();
+            }
+        };
+
+        window.openAdminAuthModal = function() {
+            const modal = document.getElementById('adminAuthModal');
+            if (modal) {
+                const input = document.getElementById('adminPasswordInput');
+                if (input) input.value = '';
+                modal.classList.remove('hidden');
+                setTimeout(() => input?.focus(), 100);
+            }
+        };
+
+        window.closeAdminAuthModal = function() {
+            const modal = document.getElementById('adminAuthModal');
+            if (modal) modal.classList.add('hidden');
+        };
+
+        window.verifyAdminPassword = function() {
+            const inputPw = document.getElementById('adminPasswordInput').value;
+            if (inputPw === customAdminPassword) {
+                isAdmin = true;
+                window.closeAdminAuthModal();
+                document.getElementById('adminPanel').classList.remove('hidden');
+                document.getElementById('addNoticeBtn').classList.remove('hidden');
+                document.getElementById('adminBtnText').innerText = "담임 모드 해제";
+                document.getElementById('classHomeroomBadge').innerText = "담임교사 관리중";
+                document.getElementById('classHomeroomBadge').className = "text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold";
+                renderBoard();
+                renderAdminTable();
+                showToast("담임 모드가 활성화되었습니다. 신청 명단 확인 및 상담불가 체크박스 설정이 가능합니다.", "success");
+            } else {
+                showToast("비밀번호가 일치하지 않습니다.", "error");
+            }
+        };
+
+        window.exitAdminMode = function() {
+            isAdmin = false;
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('addNoticeBtn').classList.add('hidden');
+            document.getElementById('adminBtnText').innerText = "담임 모드";
+            document.getElementById('classHomeroomBadge').innerText = "학부모 모드";
+            document.getElementById('classHomeroomBadge').className = "text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium";
+            renderBoard();
+            showToast("담임 모드가 해제되었습니다.", "info");
+        };
+
+        // ESC handler for modals
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                window.closeBookingModal();
+                window.closeLookupModal();
+                window.closeAddNoticeModal();
+                window.closeShareModal();
+                window.closeAdminAuthModal();
+            }
+        });
+
+        // Firebase Setup
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'parent-teacher-conference-2026';
+        let firebaseConfig = null;
+        if (typeof __firebase_config !== 'undefined') {
+            try { firebaseConfig = JSON.parse(__firebase_config); } catch(e) { console.error(e); }
+        }
+
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+
+        const CLASSES = [
+            "1학년 1반", "1학년 2반", "1학년 3반",
+            "2학년 1반", "2학년 2반", "2학년 3반", "2학년 4반",
+            "3학년 1반", "3학년 2반", "3학년 3반"
+        ];
+        let currentClass = "1학년 1반";
+
+        const DAYS = [
+            { dateStr: '2026-09-07', label: '9월 7일(월)', short: '월' },
+            { dateStr: '2026-09-08', label: '9월 8일(화)', short: '화' },
+            { dateStr: '2026-09-09', label: '9월 9일(수)', short: '수' },
+            { dateStr: '2026-09-10', label: '9월 10일(목)', short: '목' },
+            { dateStr: '2026-09-11', label: '9월 11일(금)', short: '금' }
+        ];
+
+        const TIME_SLOTS = [
+            { id: '1430', start: '14:30', end: '14:45' },
+            { id: '1445', start: '14:45', end: '15:00' },
+            { id: '1500', start: '15:00', end: '15:15' },
+            { id: '1515', start: '15:15', end: '15:30' },
+            { id: '1530', start: '15:30', end: '15:45' },
+            { id: '1545', start: '15:45', end: '16:00' },
+            { id: '1600', start: '16:00', end: '16:15' },
+            { id: '1615', start: '16:15', end: '16:30' }
+        ];
+
+        let slotsData = {}; 
+        let notices = [
+            { id: 'n1', time: '09:00', text: '📢 [교무부] 2학기 학부모 상담 신청 기간: 8월 31일(월) 09:00 ~ 9월 4일(금) 18:00' },
+            { id: 'n2', time: '09:30', text: '💡 [개인정보 보호] 다른 학부모님께는 신청 내역이 [비공개] 처리되어 보호됩니다.' }
+        ];
+        let currentLookupDoc = null;
+        let isAdmin = false;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            renderClassTabs();
+            generateAllSlotKeys();
+            renderBoard();
+            renderNotices();
+
+            if (firebaseConfig) {
+                try {
+                    const app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+
+                    onAuthStateChanged(auth, (user) => {
+                        currentUser = user;
+                        if (user) listenToRealtimeData();
+                    });
+                } catch (e) {
+                    console.warn("Firebase fallback mode:", e);
+                    loadLocalFallback();
+                }
+            } else {
+                loadLocalFallback();
+            }
+        });
+
+        function renderClassTabs() {
+            const container = document.getElementById('classTabsContainer');
+            if (!container) return;
+
+            container.innerHTML = CLASSES.map(c => {
+                const isActive = c === currentClass;
+                const activeClass = isActive 
+                    ? 'bg-blue-600 text-white font-bold shadow-sm' 
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium';
+                return `
+                    <button onclick="window.switchClass('${c}')" class="px-3 py-1.5 text-xs rounded-xl transition ${activeClass}">
+                        ${c}
+                    </button>
+                `;
+            }).join('');
+
+            const classHeader = document.getElementById('currentClassTitleHeader');
+            if (classHeader) classHeader.innerText = `${currentClass} 학부모 상담 보드`;
+
+            const adminClassHeader = document.getElementById('adminPanelClassTitle');
+            if (adminClassHeader) adminClassHeader.innerText = currentClass;
+        }
+
+        window.switchClass = function(targetClass) {
+            if (currentClass === targetClass) return;
+            currentClass = targetClass;
+            renderClassTabs();
+            generateAllSlotKeys();
+            
+            if (db && currentUser) {
+                listenToRealtimeData();
+            } else {
+                loadLocalFallback();
+            }
+            showToast(`${targetClass} 보드로 전환되었습니다.`, "info");
+        };
+
+        function generateAllSlotKeys() {
+            slotsData = {};
+            const classSlug = currentClass.replace(/\s+/g, '_');
+            DAYS.forEach((day, dayIdx) => {
+                TIME_SLOTS.forEach((slot) => {
+                    const key = `${classSlug}_${day.dateStr}_${slot.id}`;
+                    slotsData[key] = {
+                        key: key,
+                        className: currentClass,
+                        dayIdx: dayIdx,
+                        dateStr: day.dateStr,
+                        dayLabel: day.label,
+                        timeLabel: `${slot.start} - ${slot.end}`,
+                        isReserved: false,
+                        isBlocked: false,
+                        studentName: '',
+                        gradeClass: currentClass,
+                        relation: '',
+                        phone: '',
+                        consultType: '',
+                        topic: '',
+                        pin: ''
+                    };
+                });
+            });
+        }
+
+        function renderBoard() {
+            const classSlug = currentClass.replace(/\s+/g, '_');
+            DAYS.forEach((day, dayIdx) => {
+                const container = document.getElementById(`day-${dayIdx}`);
+                if (!container) return;
+                
+                let html = '';
+                TIME_SLOTS.forEach((slot) => {
+                    const key = `${classSlug}_${day.dateStr}_${slot.id}`;
+                    const item = slotsData[key] || { isReserved: false, isBlocked: false };
+                    
+                    if (isAdmin) {
+                        // Admin view for each slot
+                        if (item.isReserved) {
+                            html += `
+                                <div class="bg-amber-50/90 border border-amber-300 rounded-xl p-2.5 flex flex-col justify-between shadow-xs">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-xs font-bold text-amber-900 flex items-center">
+                                            <i class="fa-regular fa-clock mr-1 text-[11px]"></i> ${slot.start} ~ ${slot.end}
+                                        </span>
+                                        <span class="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">신청 완료</span>
+                                    </div>
+                                    <div class="my-1 text-xs space-y-0.5 text-slate-800 font-semibold bg-white p-2 rounded-lg border border-amber-200">
+                                        <div class="text-blue-900 font-bold flex items-center">
+                                            <i class="fa-solid fa-user-check text-blue-600 mr-1.5"></i>${item.studentName} (${item.relation || '보호자'})
+                                        </div>
+                                        <div class="text-slate-600 font-mono text-[11px]">
+                                            <i class="fa-solid fa-phone text-slate-400 mr-1.5"></i>${item.phone}
+                                        </div>
+                                        <div class="text-slate-500 text-[10px] truncate">
+                                            <i class="fa-solid fa-comments text-slate-400 mr-1"></i>${item.consultType} / ${item.topic}
+                                        </div>
+                                    </div>
+                                    <div class="mt-1 pt-1 border-t border-amber-200 flex justify-between items-center">
+                                        <button onclick="window.adminForceCancel('${key}')" class="text-[11px] text-rose-600 hover:text-rose-800 font-bold">
+                                            <i class="fa-solid fa-trash-can mr-1"></i>취소
+                                        </button>
+                                        <label class="flex items-center space-x-1 cursor-pointer select-none">
+                                            <input type="checkbox" ${item.isBlocked ? 'checked' : ''} onchange="window.toggleBlockSlot('${key}')" class="w-3.5 h-3.5 text-rose-600 rounded focus:ring-rose-500">
+                                            <span class="text-[10px] text-slate-700 font-bold">상담불가</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            html += `
+                                <div class="${item.isBlocked ? 'bg-rose-50/90 border-rose-300' : 'bg-white border-slate-200'} border transition rounded-xl p-2.5 flex flex-col justify-between group">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-xs font-bold ${item.isBlocked ? 'text-rose-800' : 'text-slate-700'} flex items-center">
+                                            <i class="fa-regular fa-clock mr-1 text-[11px] ${item.isBlocked ? 'text-rose-500' : 'text-blue-500'}"></i> ${slot.start} ~ ${slot.end}
+                                        </span>
+                                        <span class="${item.isBlocked ? 'bg-rose-600 text-white' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'} text-[10px] font-bold px-1.5 py-0.5 rounded">
+                                            ${item.isBlocked ? '상담 불가' : '신청 가능'}
+                                        </span>
+                                    </div>
+                                    <div class="my-1.5">
+                                        ${item.isBlocked ? `
+                                            <div class="text-[11px] text-rose-700 font-semibold flex items-center">
+                                                <i class="fa-solid fa-ban text-rose-500 mr-1.5"></i>비활성화 상태
+                                            </div>
+                                        ` : `
+                                            <button onclick="window.openBookingModal('${key}')" class="w-full py-1 text-xs font-bold bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-600 rounded-lg transition border border-blue-100 flex items-center justify-center space-x-1">
+                                                <i class="fa-solid fa-plus text-[10px]"></i>
+                                                <span>시간 선택</span>
+                                            </button>
+                                        `}
+                                    </div>
+                                    <div class="pt-1.5 border-t border-slate-200/80">
+                                        <label class="flex items-center space-x-1.5 cursor-pointer select-none">
+                                            <input type="checkbox" ${item.isBlocked ? 'checked' : ''} onchange="window.toggleBlockSlot('${key}')" class="w-4 h-4 text-rose-600 rounded focus:ring-rose-500">
+                                            <span class="text-[11px] font-bold ${item.isBlocked ? 'text-rose-600' : 'text-slate-600'}">
+                                                상담 불가(비활성화)
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        // Parent mode view
+                        if (item.isBlocked) {
+                            html += `
+                                <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 flex flex-col justify-between shadow-xs">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-xs font-bold text-rose-800 flex items-center">
+                                            <i class="fa-regular fa-clock mr-1 text-[11px]"></i> ${slot.start} ~ ${slot.end}
+                                        </span>
+                                        <span class="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs">상담 불가</span>
+                                    </div>
+                                    <div class="text-xs text-rose-700 font-medium my-1.5 flex items-center">
+                                        <i class="fa-solid fa-lock text-rose-500 mr-1.5 text-[11px]"></i>
+                                        <span>담임교사 지정 닫힘</span>
+                                    </div>
+                                    <div class="text-[10px] text-slate-400 pt-1">신청이 불가능한 시간대입니다.</div>
+                                </div>
+                            `;
+                        } else if (!item.isReserved) {
+                            html += `
+                                <div class="bg-white border border-slate-200 hover:border-blue-400 hover:shadow-md transition rounded-xl p-3 flex flex-col justify-between group">
+                                    <div class="flex justify-between items-center mb-1.5">
+                                        <span class="text-xs font-bold text-slate-700 flex items-center">
+                                            <i class="fa-regular fa-clock text-blue-500 mr-1 text-[11px]"></i> ${slot.start} ~ ${slot.end}
+                                        </span>
+                                        <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-1.5 py-0.5 rounded">신청 가능</span>
+                                    </div>
+                                    <div class="space-y-1.5">
+                                        <button onclick="window.openBookingModal('${key}')" 
+                                                class="w-full py-1.5 text-xs font-bold bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-600 rounded-lg transition border border-blue-100 flex items-center justify-center space-x-1">
+                                            <i class="fa-solid fa-plus text-[10px]"></i>
+                                            <span>시간 선택</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            html += `
+                                <div class="bg-slate-100 border border-slate-200 rounded-xl p-3 flex flex-col justify-between opacity-80">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-xs font-bold text-slate-500 flex items-center">
+                                            <i class="fa-regular fa-clock mr-1 text-[11px]"></i> ${slot.start} ~ ${slot.end}
+                                        </span>
+                                        <span class="bg-slate-300 text-slate-700 text-[10px] font-bold px-1.5 py-0.5 rounded">신청 완료</span>
+                                    </div>
+                                    <div class="text-xs text-slate-500 font-medium truncate my-1.5 flex items-center">
+                                        <i class="fa-solid fa-lock text-slate-400 mr-1.5 text-[11px]"></i>
+                                        <span class="text-slate-400 font-semibold">[비공개 예약 완료]</span>
+                                    </div>
+                                    <div class="text-[10px] text-slate-500 flex justify-between items-center border-t border-slate-200/60 pt-1.5 mt-0.5">
+                                        <span class="text-slate-400">담임선생님 전용</span>
+                                        <button onclick="window.openLookupModal('${item.studentName}')" class="text-blue-600 font-medium hover:underline">
+                                            [내 예약 조회]
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                });
+
+                container.innerHTML = html;
+            });
+
+            updateStats();
+        }
+
+        window.toggleBlockSlot = async function(slotKey) {
+            if (!slotsData[slotKey]) return;
+            slotsData[slotKey].isBlocked = !slotsData[slotKey].isBlocked;
+            
+            if (db && currentUser) {
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'slots', slotKey);
+                    await setDoc(docRef, slotsData[slotKey]);
+                } catch(e) { console.error(e); }
+            } else {
+                saveLocalFallback();
+            }
+
+            renderBoard();
+            if (isAdmin) renderAdminTable();
+            showToast(slotsData[slotKey].isBlocked ? "해당 시간대가 '상담 불가(닫힘)' 상태로 변경되었습니다." : "해당 시간대의 상담 가능 상태로 재개되었습니다.", "info");
+        };
+
+        let customAdminPassword = localStorage.getItem('homeroom_admin_pw') || '1234';
+
+        window.toggleAdminMode = function() {
+            if (!isAdmin) {
+                const pass = prompt("담임교사 비밀번호를 입력하세요 (기본 설정: 1234):");
+                if (pass === customAdminPassword) {
+                    isAdmin = true;
+                    document.getElementById('adminPanel').classList.remove('hidden');
+                    document.getElementById('addNoticeBtn').classList.remove('hidden');
+                    document.getElementById('adminBtnText').innerText = "담임 모드 해제";
+                    document.getElementById('classHomeroomBadge').innerText = "담임교사 관리중";
+                    document.getElementById('classHomeroomBadge').className = "text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold";
+                    renderBoard();
+                    renderAdminTable();
+                    showToast("담임교사 모드가 활성화되었습니다. 상담 불가 비활성화 체크박스를 사용할 수 있습니다.", "success");
+                } else if (pass !== null) {
+                    showToast("비밀번호가 일치하지 않습니다.", "error");
+                }
+            } else {
+                isAdmin = false;
+                document.getElementById('adminPanel').classList.add('hidden');
+                document.getElementById('addNoticeBtn').classList.add('hidden');
+                document.getElementById('adminBtnText').innerText = "담임 모드";
+                document.getElementById('classHomeroomBadge').innerText = "학부모 모드";
+                document.getElementById('classHomeroomBadge').className = "text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium";
+                renderBoard();
+                showToast("담임교사 모드가 해제되었습니다.", "info");
+            }
+        };
+
+        window.changeAdminPassword = function() {
+            const currentPass = prompt("현재 비밀번호를 입력하세요:");
+            if (currentPass !== customAdminPassword) {
+                showToast("현재 비밀번호가 일치하지 않습니다.", "error");
+                return;
+            }
+            const newPass = prompt("새로 사용할 비밀번호를 입력하세요 (4자리 이상):");
+            if (newPass && newPass.trim().length >= 4) {
+                customAdminPassword = newPass.trim();
+                localStorage.setItem('homeroom_admin_pw', customAdminPassword);
+                showToast("담임교사 비밀번호가 성공적으로 변경되었습니다.", "success");
+            } else if (newPass !== null) {
+                showToast("비밀번호는 최소 4자리 이상이어야 합니다.", "warning");
+            }
+        };
+
+        window.openBookingModal = function(slotKey) {
+            const slot = slotsData[slotKey];
+            if (!slot) return;
+            
+            if (slot.isBlocked) {
+                showToast("담임선생님께서 상담 불가로 지정한 시간대입니다.", "warning");
+                return;
+            }
+
+            if (slot.isReserved) {
+                showToast("이미 예약이 완료된 시간대입니다.", "warning");
+                return;
+            }
+
+            document.getElementById('modalSlotId').value = slotKey;
+            document.getElementById('modalSlotTitle').innerText = `[${currentClass}] ${slot.dayLabel} ${slot.timeLabel}`;
+            
+            document.getElementById('bookingForm').reset();
+            document.getElementById('inputGradeClass').value = currentClass;
+            document.querySelectorAll('input[name="inputTopic"]').forEach(cb => cb.checked = false);
+
+            document.getElementById('bookingModal').classList.remove('hidden');
+        };
+
+        window.handleBookingSubmit = async function(event) {
+            event.preventDefault();
+            const slotKey = document.getElementById('modalSlotId').value;
+            const slot = slotsData[slotKey];
+
+            if (!slot) return;
+
+            if (slot.isBlocked || slot.isReserved) {
+                showToast("선착순 마감: 다른 분이 먼저 신청하셨거나 닫힌 시간대입니다.", "error");
+                closeBookingModal();
+                return;
+            }
+
+            const studentName = document.getElementById('inputStudentName').value.trim();
+            const gradeClass = currentClass;
+            const relation = document.getElementById('inputRelation').value;
+            const phone = document.getElementById('inputPhone').value.trim();
+            const consultType = document.getElementById('inputConsultType').value;
+            
+            const selectedTopicEls = document.querySelectorAll('input[name="inputTopic"]:checked');
+            const topicsArray = Array.from(selectedTopicEls).map(el => el.value);
+            const topic = topicsArray.length > 0 ? topicsArray.join(', ') : '기타 안건';
+
+            const pin = document.getElementById('inputPin').value.trim();
+
+            const updatedSlot = {
+                ...slot,
+                className: currentClass,
+                isReserved: true,
+                isBlocked: false,
+                studentName,
+                gradeClass,
+                relation,
+                phone,
+                consultType,
+                topic,
+                pin,
+                updatedAt: new Date().toISOString()
+            };
+
+            slotsData[slotKey] = updatedSlot;
+
+            if (db && currentUser) {
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'slots', slotKey);
+                    await setDoc(docRef, updatedSlot);
+
+                    const noticeId = 'n_' + Date.now();
+                    const noticeData = {
+                        time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+                        text: `✅ [예약확정] ${currentClass} ${slot.dayLabel} ${slot.timeLabel} 자리가 예약되었습니다.`
+                    };
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'notices', noticeId), noticeData);
+                } catch(e) { console.error(e); }
+            } else {
+                saveLocalFallback();
+            }
+
+            closeBookingModal();
+            renderBoard();
+            showToast(`${studentName} 학생 보호자님, ${currentClass} ${slot.dayLabel} ${slot.timeLabel} 상담 신청이 완료되었습니다!`, "success");
+        };
+
+        window.performLookup = function() {
+            const name = document.getElementById('lookupStudentName').value.trim();
+            const pin = document.getElementById('lookupPin').value.trim();
+
+            if (!name || !pin) {
+                showToast("학생 이름과 비밀번호를 입력해주세요.", "warning");
+                return;
+            }
+
+            const match = Object.values(slotsData).find(s => s.isReserved && s.studentName === name && s.pin === pin);
+
+            if (!match) {
+                showToast("일치하는 예약 정보를 찾을 수 없습니다. 이름과 4자리 비밀번호를 확인해주세요.", "error");
+                return;
+            }
+
+            currentLookupDoc = match;
+
+            const cardHtml = `
+                <div class="font-bold text-slate-800 text-sm border-b border-blue-200 pb-1 mb-2">
+                    <i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i> 예약 정보 확인 (${currentClass})
+                </div>
+                <div><strong>일시:</strong> ${match.dayLabel} ${match.timeLabel}</div>
+                <div><strong>학생:</strong> ${match.studentName} (${match.gradeClass})</div>
+                <div><strong>보호자 관계:</strong> ${match.relation}</div>
+                <div><strong>연락처:</strong> ${match.phone}</div>
+                <div><strong>상담 방식:</strong> ${match.consultType} | <strong>주제:</strong> ${match.topic}</div>
+            `;
+
+            document.getElementById('lookupCard').innerHTML = cardHtml;
+            document.getElementById('lookupFormArea').classList.add('hidden');
+            document.getElementById('lookupResultArea').classList.remove('hidden');
+        };
+
+        window.cancelUserBooking = async function() {
+            if (!currentLookupDoc) return;
+            if (!confirm(`정말로 ${currentLookupDoc.dayLabel} ${currentLookupDoc.timeLabel} 상담 예약을 취소하시겠습니까?`)) return;
+
+            const slotKey = currentLookupDoc.key;
+            const emptySlot = {
+                ...currentLookupDoc,
+                isReserved: false,
+                isBlocked: false,
+                studentName: '',
+                relation: '',
+                phone: '',
+                consultType: '',
+                topic: '',
+                pin: ''
+            };
+
+            slotsData[slotKey] = emptySlot;
+
+            if (db && currentUser) {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'slots', slotKey), emptySlot);
+                
+                const noticeObj = {
+                    id: 'n_' + Date.now(),
+                    time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+                    text: `🔄 [취소안내] ${currentClass} ${emptySlot.dayLabel} ${emptySlot.timeLabel} 상담 취소표가 발생하여 신청 가능합니다.`
+                };
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'notices', noticeObj.id), noticeObj);
+            } else {
+                saveLocalFallback();
+            }
+
+            closeLookupModal();
+            renderBoard();
+            showToast("상담 예약이 성공적으로 취소되었습니다.", "info");
+        };
+
+        window.adminForceCancel = async function(slotKey) {
+            if (!confirm("담임 권한으로 해당 상담 예약을 강제 취소하시겠습니까?")) return;
+            const slot = slotsData[slotKey];
+            if (!slot) return;
+
+            const emptySlot = {
+                ...slot,
+                isReserved: false,
+                isBlocked: false,
+                studentName: '',
+                relation: '',
+                phone: '',
+                consultType: '',
+                topic: '',
+                pin: ''
+            };
+
+            slotsData[slotKey] = emptySlot;
+
+            if (db && currentUser) {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'slots', slotKey), emptySlot);
+            } else {
+                saveLocalFallback();
+            }
+
+            renderBoard();
+            renderAdminTable();
+            showToast("예약이 강제 취소 되었습니다.", "info");
+        };
+
+        function renderAdminTable() {
+            const tbody = document.getElementById('adminTableBody');
+            if (!tbody) return;
+
+            const reservedList = Object.values(slotsData).filter(s => s.isReserved);
+
+            if (reservedList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-500">${currentClass}에 등록된 학부모 상담 예약 내역이 없습니다.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = reservedList.map(item => `
+                <tr class="hover:bg-slate-800/50">
+                    <td class="px-3 py-2 font-bold text-amber-400">${item.dayLabel} ${item.timeLabel}</td>
+                    <td class="px-3 py-2 font-semibold text-white">${item.studentName}</td>
+                    <td class="px-3 py-2 text-slate-300">${item.gradeClass || currentClass}</td>
+                    <td class="px-3 py-2 text-slate-300">${item.relation || '보호자'}</td>
+                    <td class="px-3 py-2 font-mono text-blue-300">${item.phone}</td>
+                    <td class="px-3 py-2">${item.consultType}</td>
+                    <td class="px-3 py-2 text-slate-400">${item.topic}</td>
+                    <td class="px-3 py-2 text-center">
+                        <button onclick="window.adminForceCancel('${item.key}')" class="text-rose-400 hover:text-rose-300 font-bold">
+                            강제취소
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.printTeacherRoster = function() {
+            window.print();
+        };
+
+        window.exportToCsv = function() {
+            const reservedList = Object.values(slotsData).filter(s => s.isReserved);
+            if (reservedList.length === 0) {
+                showToast("내보낼 상담 데이터가 없습니다.", "warning");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            csvContent += "학급,날짜,시간,학생이름,학년반,보호자관계,연락처,상담방식,주요상담희망분야\n";
+
+            reservedList.forEach(r => {
+                csvContent += `"${currentClass}","${r.dayLabel}","${r.timeLabel}","${r.studentName}","${r.gradeClass || currentClass}","${r.relation}","${r.phone}","${r.consultType}","${r.topic}"\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `2학기_학부모상담명단_${currentClass.replace(/\s+/g,'_')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        window.resetAllSlots = async function() {
+            if (!confirm(`주의: ${currentClass}의 모든 상담 예약 데이터를 초기화하시겠습니까?`)) return;
+            generateAllSlotKeys();
+            
+            if (db && currentUser) {
+                for (const key of Object.keys(slotsData)) {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'slots', key), slotsData[key]);
+                }
+            } else {
+                saveLocalFallback();
+            }
+
+            renderBoard();
+            renderAdminTable();
+            showToast(`${currentClass} 상담 데이터가 초기화되었습니다.`, "info");
+        };
+
+        function listenToRealtimeData() {
+            if (!db) return;
+            const classSlug = currentClass.replace(/\s+/g, '_');
+            
+            const slotsCol = collection(db, 'artifacts', appId, 'public', 'data', 'slots');
+            onSnapshot(slotsCol, (snapshot) => {
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data && data.key && data.key.startsWith(classSlug)) {
+                        slotsData[data.key] = data;
+                    }
+                });
+                renderBoard();
+                if (isAdmin) renderAdminTable();
+            }, (err) => console.error(err));
+
+            const noticesCol = collection(db, 'artifacts', appId, 'public', 'data', 'notices');
+            onSnapshot(noticesCol, (snapshot) => {
+                const list = [];
+                snapshot.forEach((doc) => list.push(doc.data()));
+                if (list.length > 0) {
+                    notices = list;
+                    renderNotices();
+                }
+            }, (err) => console.error(err));
+        }
+
+        function updateStats() {
+            const all = Object.values(slotsData);
+            const total = all.length;
+            const reserved = all.filter(s => s.isReserved).length;
+            const available = all.filter(s => !s.isReserved && !s.isBlocked).length;
+
+            document.getElementById('statTotalSlots').innerText = `${total}개`;
+            document.getElementById('statReservedSlots').innerText = `${reserved}개`;
+            document.getElementById('statAvailableSlots').innerText = `${available}개`;
+        }
+
+        function renderNotices() {
+            const container = document.getElementById('noticeList');
+            if (!container) return;
+
+            container.innerHTML = notices.map(n => `
+                <div class="p-2 bg-slate-50 border border-slate-100 rounded-xl text-xs flex items-start space-x-2">
+                    <span class="text-blue-600 font-bold whitespace-nowrap">${n.time || ''}</span>
+                    <p class="text-slate-700 font-medium leading-tight">${n.text}</p>
+                </div>
+            `).join('');
+        }
+
+        function saveLocalFallback() {
+            localStorage.setItem(`slots_${currentClass}`, JSON.stringify(slotsData));
+        }
+
+        function loadLocalFallback() {
+            const saved = localStorage.getItem(`slots_${currentClass}`);
+            if (saved) {
+                try { slotsData = JSON.parse(saved); } catch(e) {}
+            }
+            renderBoard();
+            if (isAdmin) renderAdminTable();
+        }
+
+        function showToast(message, type = "info") {
+            const container = document.getElementById("toastContainer");
+            if (!container) return;
+
+            const toast = document.createElement("div");
+            toast.className = `transform transition-all duration-300 translate-y-2 opacity-0 px-4 py-3 rounded-xl shadow-xl text-xs font-bold text-white flex items-center space-x-2 pointer-events-auto max-w-xs`;
+
+            let bgClass = "bg-slate-800";
+            let iconClass = "fa-circle-info";
+
+            if (type === "success") {
+                bgClass = "bg-emerald-600";
+                iconClass = "fa-circle-check";
+            } else if (type === "warning") {
+                bgClass = "bg-amber-600";
+                iconClass = "fa-triangle-exclamation";
+            } else if (type === "error") {
+                bgClass = "bg-rose-600";
+                iconClass = "fa-circle-xmark";
+            }
+
+            toast.className += ` ${bgClass}`;
+            toast.innerHTML = `<i class="fa-solid ${iconClass} text-sm"></i> <span>${message}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove("translate-y-2", "opacity-0");
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add("opacity-0", "translate-y-2");
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
