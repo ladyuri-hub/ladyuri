@@ -37,6 +37,7 @@ interface AppContextType {
   mainTitle: string;
   settings: AppSettings;
   adminPw: string;
+  briefingSubmissions: Record<string, any>;
   
   setCurrentClass: (cls: string) => void;
   setIsAdminMode: (val: boolean) => void;
@@ -45,6 +46,7 @@ interface AppContextType {
   saveMainTitle: (val: string) => void;
   saveSettings: (settings: AppSettings) => void;
   saveAdminPw: (pw: string) => void;
+  saveBriefingSubmission: (grade: string, classNum: string, studentNum: string, studentName: string, status: string) => void;
   
   addToast: (message: string, type?: ToastMessage['type']) => void;
   removeToast: (id: number) => void;
@@ -70,6 +72,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [mainTitle, setMainTitle] = useState('2026학년도 학부모 상담주간 일정 시스템');
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [adminPw, setAdminPw] = useState('admin1234');
+  const [briefingSubmissions, setBriefingSubmissions] = useState<Record<string, string>>({});
   
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -86,6 +89,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (loadedSettings) setSettings({ ...DEFAULT_SETTINGS, ...loadedSettings });
     const loadedAdminPw = localStorage.getItem('parent_conference_admin_pw');
     if (loadedAdminPw) setAdminPw(loadedAdminPw);
+    
+    const loadedBriefing = JSON.parse(localStorage.getItem('parent_conference_briefing_submissions') || '{}');
+    setBriefingSubmissions(loadedBriefing);
   }, []);
 
   const addToast = (message: string, type: ToastMessage['type'] = 'info') => {
@@ -136,6 +142,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('parent_conference_admin_pw', pw);
   };
 
+  const saveBriefingSubmission = (grade: string, classNum: string, studentNum: string, studentName: string, status: string) => {
+    const key = `${grade}학년 ${classNum}반 ${studentNum}번`;
+    const newSubmissions = { ...briefingSubmissions, [key]: { studentName, status } };
+    setBriefingSubmissions(newSubmissions);
+    localStorage.setItem('parent_conference_briefing_submissions', JSON.stringify(newSubmissions));
+  };
+
   return (
     <AppContext.Provider value={{
       classes, currentClass, setCurrentClass,
@@ -146,6 +159,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       mainTitle, saveMainTitle,
       settings, saveSettings,
       adminPw, saveAdminPw,
+      briefingSubmissions, saveBriefingSubmission,
       toasts, addToast, removeToast
     }}>
       {children}

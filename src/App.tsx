@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { ClipboardCheck } from 'lucide-react';
 import { AppProvider, useAppContext } from './store';
 import { Header } from './components/Header';
 import { NoticeBoard } from './components/NoticeBoard';
@@ -6,14 +7,51 @@ import { StatsBar } from './components/StatsBar';
 import { ScheduleGrid } from './components/ScheduleGrid';
 import { TeacherPanel } from './components/TeacherPanel';
 import { ToastContainer } from './components/Toast';
-import { exportToCSV } from './lib/utils';
+import { exportToCSV, exportBriefingToCSV } from './lib/utils';
 import * as Modals from './components/Modals';
 
 function MainApp() {
   const { 
     classes, currentClass, setCurrentClass, 
-    isAdminMode, isTeacherMode, bookings, settings, mainTitle
+    isAdminMode, isTeacherMode, bookings, settings, mainTitle,
+    briefingSubmissions, saveBriefingSubmission, addToast
   } = useAppContext();
+
+  // Briefing Attendance State
+  const [briefingForm, setBriefingForm] = useState({
+    grade: '',
+    classNum: '',
+    studentNum: '',
+    studentName: '',
+    attendance: ''
+  });
+  
+  useEffect(() => {
+    const saved = localStorage.getItem('parent_conference_briefing_form');
+    if (saved) setBriefingForm(JSON.parse(saved));
+  }, []);
+  
+  const handleBriefingChange = (field: string, value: string) => {
+    const newForm = { ...briefingForm, [field]: value };
+    if (field === 'grade') newForm.classNum = '';
+    setBriefingForm(newForm);
+    localStorage.setItem('parent_conference_briefing_form', JSON.stringify(newForm));
+  };
+
+  const handleBriefingSubmit = () => {
+    if (!briefingForm.grade || !briefingForm.classNum || !briefingForm.studentNum || !briefingForm.studentName || !briefingForm.attendance) {
+      addToast('학년, 반, 번호, 이름, 참석 여부를 모두 입력해주세요.', 'error');
+      return;
+    }
+    saveBriefingSubmission(briefingForm.grade, briefingForm.classNum, briefingForm.studentNum, briefingForm.studentName, briefingForm.attendance);
+    addToast('설명회 참석 여부가 저장되었습니다.', 'success');
+  };
+
+  const getClassesForGrade = (g: string) => {
+    if (g === '1' || g === '3') return [1, 2, 3];
+    if (g === '2') return [1, 2, 3, 4];
+    return [];
+  };
 
   // Modals state
   const [modalState, setModalState] = useState<{
@@ -93,6 +131,90 @@ function MainApp() {
         
         <StatsBar />
 
+        {/* Briefing Attendance Form */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200/90 p-5 space-y-4">
+          <h3 className="font-bold text-slate-800 flex items-center gap-2 text-sm sm:text-base">
+            <ClipboardCheck className="w-4 h-4 text-indigo-600" />
+            9/9(수) 15:30 ~ 16:30 교육과정설명회 참석 여부 조사
+          </h3>
+          <div className="flex flex-wrap items-center gap-3">
+            <select 
+              value={briefingForm.grade} 
+              onChange={(e) => handleBriefingChange('grade', e.target.value)}
+              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            >
+              <option value="">학년 선택</option>
+              <option value="1">1학년</option>
+              <option value="2">2학년</option>
+              <option value="3">3학년</option>
+            </select>
+            
+            <select 
+              value={briefingForm.classNum} 
+              onChange={(e) => handleBriefingChange('classNum', e.target.value)}
+              disabled={!briefingForm.grade}
+              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-400 bg-white"
+            >
+              <option value="">반 선택</option>
+              {getClassesForGrade(briefingForm.grade).map(c => (
+                <option key={c} value={String(c)}>{c}반</option>
+              ))}
+            </select>
+
+            <select 
+              value={briefingForm.studentNum} 
+              onChange={(e) => handleBriefingChange('studentNum', e.target.value)}
+              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            >
+              <option value="">번호 선택</option>
+              {Array.from({length: 30}, (_, i) => i + 1).map(n => (
+                <option key={n} value={String(n)}>{n}번</option>
+              ))}
+            </select>
+            
+            <input 
+              type="text" 
+              value={briefingForm.studentName} 
+              onChange={(e) => handleBriefingChange('studentName', e.target.value)}
+              placeholder="학생 이름"
+              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white w-24"
+            />
+
+            <div className="flex items-center gap-4 ml-auto sm:ml-2 bg-white px-3 py-2 rounded-lg border border-slate-300">
+              <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="attendance" 
+                  value="참석" 
+                  checked={briefingForm.attendance === '참석'} 
+                  onChange={(e) => handleBriefingChange('attendance', e.target.value)}
+                  className="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500"
+                />
+                <span className="font-medium text-slate-700">참석</span>
+              </label>
+              <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="attendance" 
+                  value="불참" 
+                  checked={briefingForm.attendance === '불참'} 
+                  onChange={(e) => handleBriefingChange('attendance', e.target.value)}
+                  className="w-4 h-4 text-red-500 border-slate-300 focus:ring-red-500"
+                />
+                <span className="font-medium text-slate-700">불참</span>
+              </label>
+            </div>
+            
+            <button 
+              type="button"
+              onClick={handleBriefingSubmit}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg shadow-sm transition ml-auto sm:ml-0"
+            >
+              제출
+            </button>
+          </div>
+        </div>
+
         <ScheduleGrid 
           onOpenBooking={(date, label, time) => openModal('booking', { date, label, time })}
           onOpenDetail={(date, label, time) => openModal('detail', { date, label, time })}
@@ -105,7 +227,8 @@ function MainApp() {
             onPrint={() => openModal('print')}
             onConfirmDelete={(slotKey) => openModal('confirm', { slotKey })}
             onConfirmReset={() => openModal('confirm', { type: 'reset' })}
-            onExport={() => exportToCSV(bookings, currentClass, settings.dates, settings.times)}
+            onExport={() => exportToCSV(bookings, currentClass, settings.dates, settings.times, (msg) => addToast(msg, 'error'))}
+            onExportBriefing={() => exportBriefingToCSV(briefingSubmissions, (msg) => addToast(msg, 'error'))}
           />
         )}
 

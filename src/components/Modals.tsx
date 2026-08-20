@@ -273,8 +273,7 @@ const AdminAuthModal = ({ onClose }: any) => {
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">시스템 관리자 비밀번호</label>
-            <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="비밀번호 입력 (기본: admin1234)" className="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" required />
-            <p className="text-[11px] text-slate-400 mt-1">* 관리자 비밀번호는 <code className="bg-indigo-50 px-1 py-0.5 rounded text-indigo-700 font-bold">admin1234</code> 입니다.</p>
+            <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="비밀번호 입력" className="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" required />
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={onClose} className="px-4 py-2 border border-slate-300 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">취소</button>
@@ -458,7 +457,7 @@ const ShareModal = ({ onClose }: any) => {
 
 // PrintModal
 const PrintModal = ({ onClose }: any) => {
-  const { bookings, currentClass, settings } = useAppContext();
+  const { bookings, currentClass, settings, addToast } = useAppContext();
   const classBookings = bookings[currentClass] || {};
   
   const entries: any[] = [];
@@ -512,10 +511,16 @@ const PrintModal = ({ onClose }: any) => {
           </table>
         </div>
         <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2 no-print">
-          <button onClick={() => exportToCSV(bookings, currentClass, settings.dates, settings.times)} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5">
+          <button onClick={() => exportToCSV(bookings, currentClass, settings.dates, settings.times, (msg) => addToast(msg, 'error'))} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5">
             <FileSpreadsheet className="w-4 h-4"/> 엑셀 저장
           </button>
-          <button onClick={() => window.print()} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5">
+          <button onClick={() => {
+            if (window !== window.parent) {
+              addToast('미리보기 환경에서는 보안상 인쇄가 제한됩니다. 우측 상단 "새 탭에서 열기(↗)"를 눌러주세요.', 'error');
+              return;
+            }
+            window.print();
+          }} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5">
             <Printer className="w-4 h-4"/> 인쇄하기
           </button>
           <button onClick={onClose} className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-xl text-xs font-bold">닫기</button>
