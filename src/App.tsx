@@ -115,7 +115,7 @@ function MainApp() {
         
         {/* Class Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
-          {classes.map(cls => (
+          {(!isTeacherMode || isAdminMode) ? classes.map(cls => (
             <button key={cls} onClick={() => setCurrentClass(cls)}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap shadow-sm ${
                 cls === currentClass 
@@ -124,7 +124,12 @@ function MainApp() {
               }`}>
               {cls}
             </button>
-          ))}
+          )) : (
+            <button
+              className="px-3.5 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap shadow-sm bg-blue-600 text-white shadow-blue-200 cursor-default">
+              {currentClass}
+            </button>
+          )}
         </div>
 
         <NoticeBoard onOpenPeriodManage={() => openModal('periodManage')} />

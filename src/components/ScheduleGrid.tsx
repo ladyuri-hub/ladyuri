@@ -125,10 +125,12 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({ onOpenBooking, onOpe
                         <div className="py-1 text-center text-[11px] font-bold text-rose-400 bg-white/70 rounded-lg border border-rose-100">
                           신청 비활성화됨
                         </div>
-                        <label className="flex items-center gap-1.5 text-[11px] text-slate-500 cursor-pointer pt-0.5">
-                          <input type="checkbox" checked={true} onChange={() => toggleDisableSlot(d.date, t)} className="rounded accent-rose-500" />
-                          <span>상담 불가(비활성화)</span>
-                        </label>
+                        {(isAdminMode || isTeacherMode) && (
+                          <label className="flex items-center gap-1.5 text-[11px] text-slate-500 cursor-pointer pt-0.5">
+                            <input type="checkbox" checked={true} onChange={() => toggleDisableSlot(d.date, t)} className="rounded accent-rose-500" />
+                            <span>상담 불가(비활성화)</span>
+                          </label>
+                        )}
                       </div>
                     );
                   } else {

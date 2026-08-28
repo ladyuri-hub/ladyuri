@@ -63,8 +63,30 @@ const AppContext = createContext<AppContextType | null>(null);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [classes, setClasses] = useState<string[]>(DEFAULT_CLASSES);
   const [currentClass, setCurrentClass] = useState<string>('3학년 3반');
-  const [isAdminMode, setIsAdminMode] = useState(false);
-  const [isTeacherMode, setIsTeacherMode] = useState(false);
+  const [isAdminModeState, setIsAdminModeState] = useState(false);
+  const [authTeacherClasses, setAuthTeacherClasses] = useState<string[]>([]);
+  
+  const isAdminMode = isAdminModeState;
+  const isTeacherMode = authTeacherClasses.includes(currentClass);
+
+  const setIsAdminMode = (val: boolean) => {
+    setIsAdminModeState(val);
+    sessionStorage.setItem('parent_conference_admin_auth', val ? 'true' : 'false');
+  };
+
+  const setIsTeacherMode = (val: boolean) => {
+    setAuthTeacherClasses(prev => {
+      let next;
+      if (val) {
+        next = Array.from(new Set([...prev, currentClass]));
+      } else {
+        next = prev.filter(c => c !== currentClass);
+      }
+      sessionStorage.setItem('parent_conference_teacher_auth_classes', JSON.stringify(next));
+      return next;
+    });
+  };
+
   const [bookings, setBookings] = useState<Record<string, Record<string, Booking>>>({});
   const [disabledSlots, setDisabledSlots] = useState<Record<string, Record<string, boolean>>>({});
   const [teacherPasswords, setTeacherPasswords] = useState<Record<string, string>>({});
@@ -92,6 +114,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     
     const loadedBriefing = JSON.parse(localStorage.getItem('parent_conference_briefing_submissions') || '{}');
     setBriefingSubmissions(loadedBriefing);
+
+    const loadedAdminAuth = sessionStorage.getItem('parent_conference_admin_auth') === 'true';
+    setIsAdminModeState(loadedAdminAuth);
+    
+    const loadedTeacherAuth = JSON.parse(sessionStorage.getItem('parent_conference_teacher_auth_classes') || '[]');
+    setAuthTeacherClasses(loadedTeacherAuth);
   }, []);
 
   const addToast = (message: string, type: ToastMessage['type'] = 'info') => {
