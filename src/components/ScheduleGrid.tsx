@@ -103,7 +103,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({ onOpenBooking, onOpe
                               <Lock className="w-2 h-2" /> 예약 완료
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-400 font-medium">상담 완료 (비공개)</p>
+                          <p className="text-[11px] text-slate-400 font-medium">신청 완료 (비공개)</p>
                         </div>
                       );
                     }

@@ -66,9 +66,16 @@ const AppContext = createContext<AppContextType | null>(null);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [classes, setClasses] = useState<string[]>(DEFAULT_CLASSES);
-  const [currentClass, setCurrentClass] = useState<string>('3학년 3반');
+  const [currentClassState, setCurrentClassState] = useState<string>('3학년 3반');
   const [isAdminModeState, setIsAdminModeState] = useState(false);
   const [authTeacherClasses, setAuthTeacherClasses] = useState<string[]>([]);
+  
+  const currentClass = currentClassState;
+  const setCurrentClass = (cls: string | ((prev: string) => string)) => {
+    setCurrentClassState(cls);
+    setAuthTeacherClasses([]); // 다른 반 클릭 시 담임모드 즉시 해제
+    sessionStorage.removeItem('parent_conference_teacher_auth_classes');
+  };
   
   const isAdminMode = isAdminModeState;
   const isTeacherMode = authTeacherClasses.includes(currentClass);
@@ -162,18 +169,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   const updateBookingSlot = async (cls: string, slotKey: string, data: Booking) => {
     const docRef = doc(db, 'appData', 'global');
-    await updateDoc(docRef, {
-      [`bookings.${cls}.${slotKey}`]: data
-    });
+    await setDoc(docRef, { bookings: { [cls]: { [slotKey]: data } } }, { merge: true });
   };
 
   const removeBookingSlot = async (cls: string, slotKey: string) => {
     const docRef = doc(db, 'appData', 'global');
-    // We need deleteField from firestore
-    
-    await updateDoc(docRef, {
-      [`bookings.${cls}.${slotKey}`]: deleteField()
-    });
+    await setDoc(docRef, { bookings: { [cls]: { [slotKey]: deleteField() } } }, { merge: true });
   };
 
   const saveBookings = (newBookings: Record<string, Record<string, Booking>>) => {
@@ -185,13 +186,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateDisabledSlot = async (cls: string, slotKey: string, disabled: boolean) => {
     const docRef = doc(db, 'appData', 'global');
     if (disabled) {
-      await updateDoc(docRef, {
-        [`disabledSlots.${cls}.${slotKey}`]: true
-      });
+      await setDoc(docRef, { disabledSlots: { [cls]: { [slotKey]: true } } }, { merge: true });
     } else {
-      await updateDoc(docRef, {
-        [`disabledSlots.${cls}.${slotKey}`]: deleteField()
-      });
+      await setDoc(docRef, { disabledSlots: { [cls]: { [slotKey]: deleteField() } } }, { merge: true });
     }
   };
 
