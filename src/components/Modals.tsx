@@ -212,6 +212,9 @@ const TeacherAuthModal = ({ onClose }: any) => {
     }
   };
 
+  const expectedPw = teacherPasswords[currentClass] || '1234';
+  const isDefaultPw = expectedPw === '1234';
+
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border border-slate-100 animate-fade-in">
@@ -222,8 +225,12 @@ const TeacherAuthModal = ({ onClose }: any) => {
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">[{currentClass}] 담임교사 비밀번호</label>
-            <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="비밀번호 입력 (기본: 1234)" className="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" required />
-            <p className="text-[11px] text-slate-400 mt-1">* 해당 반의 기본 비밀번호는 <code className="bg-slate-100 px-1 py-0.5 rounded text-amber-700 font-bold">1234</code> 입니다.</p>
+            <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder="비밀번호 입력" className="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" required />
+            {isDefaultPw ? (
+              <p className="text-[11px] text-slate-400 mt-1">* 최초 설정된 비밀번호는 <code className="bg-slate-100 px-1 py-0.5 rounded text-amber-700 font-bold">1234</code> 입니다.</p>
+            ) : (
+              <p className="text-[11px] text-slate-400 mt-1">* 담임 선생님께서 변경하신 비밀번호를 입력해주세요.</p>
+            )}
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={onClose} className="px-4 py-2 border border-slate-300 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">취소</button>
