@@ -139,8 +139,14 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({ onOpenBooking, onOpe
                         <button 
                           onClick={() => {
                             const now = new Date();
-                            if (!isAdminMode && !isTeacherMode && now.getHours() < 9) {
-                              addToast('상담 신청은 오전 9시부터 가능합니다.', 'error');
+                            const openTime = new Date('2026-08-31T09:00:00+09:00'); // KST 9:00 AM
+                            const closeTime = new Date('2026-09-04T18:00:00+09:00'); // KST 6:00 PM
+                            if (!isAdminMode && !isTeacherMode && now.getTime() > closeTime.getTime()) {
+                              addToast('상담 신청 기간이 종료되었습니다.', 'error');
+                              return;
+                            }
+                            if (!isAdminMode && !isTeacherMode && now.getTime() < openTime.getTime()) {
+                              addToast('상담 신청은 8월 31일(월) 오전 9시부터 시작됩니다.', 'error');
                               return;
                             }
                             onOpenBooking(d.date, `${d.label} ${d.day}`, t);

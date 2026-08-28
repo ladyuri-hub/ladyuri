@@ -13,6 +13,31 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({ onOpenPeriodManage }) 
     window.dispatchEvent(new Event('refresh'));
   };
 
+  const now = new Date();
+  const openTime = new Date('2026-08-31T09:00:00+09:00');
+  const closeTime = new Date('2026-09-04T18:00:00+09:00');
+
+  let statusBadge = null;
+  if (now.getTime() < openTime.getTime()) {
+    statusBadge = (
+      <span className="px-2.5 py-1 bg-amber-500 text-white font-extrabold text-[11px] rounded-full shadow-sm flex items-center gap-1">
+        <CircleDot className="w-2.5 h-2.5" /> 대기중
+      </span>
+    );
+  } else if (now.getTime() > closeTime.getTime()) {
+    statusBadge = (
+      <span className="px-2.5 py-1 bg-slate-500 text-white font-extrabold text-[11px] rounded-full shadow-sm flex items-center gap-1">
+        <CircleDot className="w-2.5 h-2.5" /> 완료
+      </span>
+    );
+  } else {
+    statusBadge = (
+      <span className="px-2.5 py-1 bg-emerald-500 text-white font-extrabold text-[11px] rounded-full shadow-sm flex items-center gap-1">
+        <CircleDot className="w-2.5 h-2.5 animate-pulse" /> 진행중
+      </span>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5 relative overflow-hidden flex flex-col justify-between space-y-4">
@@ -47,9 +72,7 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({ onOpenPeriodManage }) 
                 </button>
               )}
             </span>
-            <span className="px-2.5 py-1 bg-emerald-500 text-white font-extrabold text-[11px] rounded-full shadow-sm flex items-center gap-1">
-              <CircleDot className="w-2.5 h-2.5 animate-pulse" /> 신청 접수 진행중
-            </span>
+            {statusBadge}
           </div>
 
           <p className="text-xs md:text-sm text-slate-600 leading-relaxed font-normal">
