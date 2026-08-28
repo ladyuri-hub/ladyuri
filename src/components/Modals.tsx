@@ -6,7 +6,7 @@ import { exportToCSV } from '../lib/utils';
 
 // BookingModal
 const BookingModal = ({ info, onClose }: any) => {
-  const { currentClass, bookings, saveBookings, addToast } = useAppContext();
+  const { currentClass, bookings, updateBookingSlot, addToast } = useAppContext();
   const [studentName, setStudentName] = useState('');
   const [parentName, setParentName] = useState('');
   const [phone, setPhone] = useState('');
@@ -30,14 +30,7 @@ const BookingModal = ({ info, onClose }: any) => {
       return;
     }
 
-    const newBookings = {
-      ...bookings,
-      [currentClass]: {
-        ...classBookings,
-        [slotKey]: { studentName, parentName, phone, password, type, note, createdAt: new Date().toLocaleString('ko-KR') }
-      }
-    };
-    saveBookings(newBookings);
+    updateBookingSlot(currentClass, slotKey, { studentName, parentName, phone, password, type, note, createdAt: new Date().toLocaleString('ko-KR') });
     addToast(`[${currentClass}] ${studentName} 학생 상담 신청이 완료되었습니다.`, 'success');
     onClose();
   };
@@ -105,7 +98,7 @@ const BookingModal = ({ info, onClose }: any) => {
 
 // DetailModal
 const DetailModal = ({ info, onClose, onConfirmDelete }: any) => {
-  const { currentClass, bookings, isAdminMode, isTeacherMode, saveBookings, addToast } = useAppContext();
+  const { currentClass, bookings, isAdminMode, isTeacherMode, removeBookingSlot, addToast } = useAppContext();
   const [cancelPw, setCancelPw] = useState('');
   
   const slotKey = `${info.date}_${info.time}`;
@@ -123,9 +116,7 @@ const DetailModal = ({ info, onClose, onConfirmDelete }: any) => {
     }
     if (booking.password === cancelPw) {
       if (confirm('정말로 본 상담 예약을 취소하시겠습니까?')) {
-        const newBookings = { ...bookings };
-        delete newBookings[currentClass][slotKey];
-        saveBookings(newBookings);
+        removeBookingSlot(currentClass, slotKey);
         addToast('상담 신청이 취소되었습니다.', 'success');
         onClose();
       }
@@ -136,9 +127,7 @@ const DetailModal = ({ info, onClose, onConfirmDelete }: any) => {
 
   const handleCancelTeacher = () => {
     if (confirm('담임/관리자 권한으로 본 예약을 삭제하시겠습니까?')) {
-      const newBookings = { ...bookings };
-      delete newBookings[currentClass][slotKey];
-      saveBookings(newBookings);
+      removeBookingSlot(currentClass, slotKey);
       addToast('예약 정보가 정상적으로 삭제되었습니다.', 'success');
       onClose();
     }
@@ -602,7 +591,7 @@ const LookupModal = ({ onClose }: any) => {
 
 // ConfirmModal
 const ConfirmModal = ({ info, onClose }: any) => {
-  const { currentClass, bookings, saveBookings, disabledSlots, saveDisabledSlots, addToast } = useAppContext();
+  const { currentClass, bookings, saveBookings, removeBookingSlot, disabledSlots, saveDisabledSlots, addToast } = useAppContext();
 
   const handleOk = () => {
     if (info.type === 'reset') {
@@ -616,9 +605,7 @@ const ConfirmModal = ({ info, onClose }: any) => {
       
       addToast(`'${currentClass}' 데이터가 성공적으로 초기화되었습니다.`, 'amber');
     } else if (info.slotKey) {
-      const newBookings = { ...bookings };
-      delete newBookings[currentClass][info.slotKey];
-      saveBookings(newBookings);
+      removeBookingSlot(currentClass, info.slotKey);
       addToast('예약 내역이 삭제되었습니다.', 'success');
     } else if (info.onOk) {
       info.onOk();

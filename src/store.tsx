@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Booking, DEFAULT_CLASSES, DATES, TIMES } from './types';
+import { db } from './lib/firebase';
+import { doc, onSnapshot, setDoc, updateDoc, deleteField } from 'firebase/firestore';
 
 export interface ToastMessage {
   id: number;
@@ -52,11 +54,13 @@ interface AppContextType {
   removeToast: (id: number) => void;
   
   saveBookings: (newBookings: Record<string, Record<string, Booking>>) => void;
+  updateBookingSlot: (cls: string, slotKey: string, data: Booking) => void;
+  removeBookingSlot: (cls: string, slotKey: string) => void;
   saveDisabledSlots: (newSlots: Record<string, Record<string, boolean>>) => void;
+  updateDisabledSlot: (cls: string, slotKey: string, disabled: boolean) => void;
   saveClasses: (newClasses: string[]) => void;
   saveTeacherPw: (cls: string, pw: string) => void;
 }
-
 
 const AppContext = createContext<AppContextType | null>(null);
 
@@ -99,27 +103,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   useEffect(() => {
-    const loadedClasses = JSON.parse(localStorage.getItem('parent_conference_classes') || 'null') || DEFAULT_CLASSES;
-    setClasses(loadedClasses);
-    setCurrentClass(loadedClasses[loadedClasses.length - 1] || '3학년 3반');
-    setBookings(JSON.parse(localStorage.getItem('parent_conference_bookings') || '{}'));
-    setDisabledSlots(JSON.parse(localStorage.getItem('parent_conference_disabled_slots') || '{}'));
-    setTeacherPasswords(JSON.parse(localStorage.getItem('parent_conference_teacher_pws') || '{}'));
-    const loadedTitle = localStorage.getItem('parent_conference_main_title');
-    if (loadedTitle) setMainTitle(loadedTitle);
-    const loadedSettings = JSON.parse(localStorage.getItem('parent_conference_settings') || 'null');
-    if (loadedSettings) setSettings({ ...DEFAULT_SETTINGS, ...loadedSettings });
-    const loadedAdminPw = localStorage.getItem('parent_conference_admin_pw');
-    if (loadedAdminPw) setAdminPw(loadedAdminPw);
-    
-    const loadedBriefing = JSON.parse(localStorage.getItem('parent_conference_briefing_submissions') || '{}');
-    setBriefingSubmissions(loadedBriefing);
-
     const loadedAdminAuth = sessionStorage.getItem('parent_conference_admin_auth') === 'true';
     setIsAdminModeState(loadedAdminAuth);
     
     const loadedTeacherAuth = JSON.parse(sessionStorage.getItem('parent_conference_teacher_auth_classes') || '[]');
     setAuthTeacherClasses(loadedTeacherAuth);
+
+    const docRef = doc(db, 'appData', 'global');
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.classes) {
+          setClasses(data.classes);
+          setCurrentClass(prev => data.classes.includes(prev) ? prev : (data.classes[data.classes.length - 1] || ''));
+        }
+        if (data.bookings) setBookings(data.bookings);
+        if (data.disabledSlots) setDisabledSlots(data.disabledSlots);
+        if (data.teacherPasswords) setTeacherPasswords(data.teacherPasswords);
+        if (data.mainTitle) setMainTitle(data.mainTitle);
+        if (data.settings) setSettings(data.settings);
+        if (data.adminPw) setAdminPw(data.adminPw);
+        if (data.briefingSubmissions) setBriefingSubmissions(data.briefingSubmissions);
+      } else {
+        // Initialize if empty
+        setDoc(docRef, {
+          classes: DEFAULT_CLASSES,
+          bookings: {},
+          disabledSlots: {},
+          teacherPasswords: {},
+          mainTitle: '2026학년도 학부모 상담주간 일정 시스템',
+          settings: DEFAULT_SETTINGS,
+          adminPw: 'admin1234',
+          briefingSubmissions: {}
+        });
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const addToast = (message: string, type: ToastMessage['type'] = 'info') => {
@@ -134,54 +154,90 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setToasts(prev => prev.filter(t => t.id !== id));
   };
 
+  const updateGlobalDoc = async (updates: any) => {
+    const docRef = doc(db, 'appData', 'global');
+    await setDoc(docRef, updates, { merge: true });
+  };
+
+  
+  const updateBookingSlot = async (cls: string, slotKey: string, data: Booking) => {
+    const docRef = doc(db, 'appData', 'global');
+    await updateDoc(docRef, {
+      [`bookings.${cls}.${slotKey}`]: data
+    });
+  };
+
+  const removeBookingSlot = async (cls: string, slotKey: string) => {
+    const docRef = doc(db, 'appData', 'global');
+    // We need deleteField from firestore
+    
+    await updateDoc(docRef, {
+      [`bookings.${cls}.${slotKey}`]: deleteField()
+    });
+  };
+
   const saveBookings = (newBookings: Record<string, Record<string, Booking>>) => {
     setBookings(newBookings);
-    localStorage.setItem('parent_conference_bookings', JSON.stringify(newBookings));
+    updateGlobalDoc({ bookings: newBookings });
+  };
+
+  
+  const updateDisabledSlot = async (cls: string, slotKey: string, disabled: boolean) => {
+    const docRef = doc(db, 'appData', 'global');
+    if (disabled) {
+      await updateDoc(docRef, {
+        [`disabledSlots.${cls}.${slotKey}`]: true
+      });
+    } else {
+      await updateDoc(docRef, {
+        [`disabledSlots.${cls}.${slotKey}`]: deleteField()
+      });
+    }
   };
 
   const saveDisabledSlots = (newSlots: Record<string, Record<string, boolean>>) => {
     setDisabledSlots(newSlots);
-    localStorage.setItem('parent_conference_disabled_slots', JSON.stringify(newSlots));
+    updateGlobalDoc({ disabledSlots: newSlots });
   };
 
   const saveClasses = (newClasses: string[]) => {
     setClasses(newClasses);
-    localStorage.setItem('parent_conference_classes', JSON.stringify(newClasses));
+    updateGlobalDoc({ classes: newClasses });
   };
 
   const saveTeacherPw = (cls: string, pw: string) => {
     const newPws = { ...teacherPasswords, [cls]: pw };
     setTeacherPasswords(newPws);
-    localStorage.setItem('parent_conference_teacher_pws', JSON.stringify(newPws));
+    updateGlobalDoc({ teacherPasswords: newPws });
   };
 
   const saveMainTitle = (newTitle: string) => {
     setMainTitle(newTitle);
-    localStorage.setItem('parent_conference_main_title', newTitle);
+    updateGlobalDoc({ mainTitle: newTitle });
   };
 
   const saveSettings = (newSettings: AppSettings) => {
     setSettings(newSettings);
-    localStorage.setItem('parent_conference_settings', JSON.stringify(newSettings));
+    updateGlobalDoc({ settings: newSettings });
   };
 
   const saveAdminPw = (pw: string) => {
     setAdminPw(pw);
-    localStorage.setItem('parent_conference_admin_pw', pw);
+    updateGlobalDoc({ adminPw: pw });
   };
 
   const saveBriefingSubmission = (grade: string, classNum: string, studentNum: string, studentName: string, status: string) => {
     const key = `${grade}학년 ${classNum}반 ${studentNum}번`;
     const newSubmissions = { ...briefingSubmissions, [key]: { studentName, status } };
     setBriefingSubmissions(newSubmissions);
-    localStorage.setItem('parent_conference_briefing_submissions', JSON.stringify(newSubmissions));
+    updateGlobalDoc({ briefingSubmissions: newSubmissions });
   };
 
   return (
     <AppContext.Provider value={{
       classes, currentClass, setCurrentClass,
       isAdminMode, setIsAdminMode, isTeacherMode, setIsTeacherMode,
-      bookings, saveBookings, disabledSlots, saveDisabledSlots,
+      bookings, saveBookings, updateBookingSlot, removeBookingSlot, disabledSlots, saveDisabledSlots, updateDisabledSlot,
       teacherPasswords, saveTeacherPw, saveClasses,
       searchQuery, setSearchQuery,
       mainTitle, saveMainTitle,

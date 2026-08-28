@@ -9,23 +9,17 @@ interface ScheduleGridProps {
 }
 
 export const ScheduleGrid: React.FC<ScheduleGridProps> = ({ onOpenBooking, onOpenDetail, onOpenPeriodManage }) => {
-  const { currentClass, bookings, disabledSlots, isAdminMode, isTeacherMode, searchQuery, setSearchQuery, addToast, saveDisabledSlots, settings } = useAppContext();
+  const { currentClass, bookings, disabledSlots, isAdminMode, isTeacherMode, searchQuery, setSearchQuery, addToast, updateDisabledSlot, settings } = useAppContext();
 
   const classBookings = bookings[currentClass] || {};
   const classDisabled = disabledSlots[currentClass] || {};
 
   const toggleDisableSlot = (date: string, time: string) => {
     const slotKey = `${date}_${time}`;
-    const newDisabled = {
-      ...disabledSlots,
-      [currentClass]: {
-        ...classDisabled,
-        [slotKey]: !classDisabled[slotKey]
-      }
-    };
-    saveDisabledSlots(newDisabled);
+    const isCurrentlyDisabled = !!classDisabled[slotKey];
+    updateDisabledSlot(currentClass, slotKey, !isCurrentlyDisabled);
     addToast(
-      !classDisabled[slotKey] ? '해당 시간이 상담 불가로 설정되었습니다.' : '해당 시간이 신청 가능 상태로 변경되었습니다.',
+      !isCurrentlyDisabled ? '해당 시간이 상담 불가로 설정되었습니다.' : '해당 시간이 신청 가능 상태로 변경되었습니다.',
       'info'
     );
   };
@@ -142,7 +136,17 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({ onOpenBooking, onOpe
                           </span>
                           <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded">신청 가능</span>
                         </div>
-                        <button onClick={() => onOpenBooking(d.date, `${d.label} ${d.day}`, t)} className="w-full py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-lg border border-blue-100 transition flex items-center justify-center gap-1">
+                        <button 
+                          onClick={() => {
+                            const now = new Date();
+                            if (!isAdminMode && !isTeacherMode && now.getHours() < 9) {
+                              addToast('상담 신청은 오전 9시부터 가능합니다.', 'error');
+                              return;
+                            }
+                            onOpenBooking(d.date, `${d.label} ${d.day}`, t);
+                          }} 
+                          className="w-full py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-lg border border-blue-100 transition flex items-center justify-center gap-1"
+                        >
                           <Plus className="w-3 h-3" /> 시간 선택
                         </button>
                         {(isAdminMode || isTeacherMode) && (
