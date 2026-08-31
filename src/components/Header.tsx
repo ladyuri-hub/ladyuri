@@ -107,9 +107,11 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               </>
             )}
-            <button onClick={onOpenPrint} className="px-4 py-2 bg-[#1e293b] hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
-              <Download className="w-4 h-4" /> 현재 학급용 명단 인쇄/다운로드
-            </button>
+            {(isAdminMode || isTeacherMode) && (
+              <button onClick={onOpenPrint} className="px-4 py-2 bg-[#1e293b] hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                <Download className="w-4 h-4" /> 현재 학급용 명단 인쇄/다운로드
+              </button>
+            )}
           </div>
         </div>
       </div>

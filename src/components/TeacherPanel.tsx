@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Key, FileSpreadsheet, Printer, Trash2, FolderOpen, Users, BookOpen } from 'lucide-react';
+import { Key, FileSpreadsheet, Printer, Trash2, FolderOpen, Users, BookOpen, Globe } from 'lucide-react';
 import { useAppContext } from '../store';
 
 interface TeacherPanelProps {
@@ -15,7 +15,7 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
   const { currentClass, bookings, settings, briefingSubmissions } = useAppContext();
   const [activeTab, setActiveTab] = useState<'consultation' | 'briefing'>('consultation');
   
-  const classBookings = bookings[currentClass] || {};
+    const classBookings = bookings[currentClass] || {};
   const entries: any[] = [];
   settings.dates.forEach(d => {
       settings.times.forEach(t => {
@@ -30,6 +30,27 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
           }
       });
   });
+
+  const allEntries: any[] = [];
+  if (isAdminMode) {
+    classes.forEach(cls => {
+      const clsBookings = bookings[cls] || {};
+      settings.dates.forEach(d => {
+        settings.times.forEach(t => {
+            const slotKey = `${d.date}_${t}`;
+            if (clsBookings[slotKey]) {
+                allEntries.push({
+                    className: cls,
+                    dateLabel: d.label,
+                    time: t,
+                    slotKey,
+                    ...clsBookings[slotKey]
+                });
+            }
+        });
+      });
+    });
+  }
 
   const classBriefings = Object.entries(briefingSubmissions || {})
     .filter(([key]) => key.startsWith(currentClass))
@@ -48,7 +69,7 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
             담임/관리자 모드
           </span>
           <h3 className="text-base md:text-lg font-extrabold tracking-tight text-white">
-            <span className="text-amber-400">{currentClass}</span> {activeTab === 'consultation' ? '상담 신청 현황 대장' : '설명회 참석 현황'}
+            <span className="text-amber-400">{activeTab === 'allConsultation' ? '전체 학급' : currentClass}</span> {activeTab === 'consultation' ? '상담 신청 현황 대장' : activeTab === 'allConsultation' ? '상담 신청 전체 현황' : '설명회 참석 현황'}
           </h3>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -79,7 +100,7 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
         </div>
       </div>
 
-      <div className="flex gap-2 border-b border-slate-800 pb-2">
+            <div className="flex flex-wrap gap-2 border-b border-slate-800 pb-2">
         <button 
           onClick={() => setActiveTab('consultation')}
           className={`px-4 py-2 text-sm font-bold rounded-t-lg transition ${activeTab === 'consultation' ? 'bg-slate-800 text-amber-400 border-b-2 border-amber-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}
@@ -92,10 +113,58 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
         >
           <span className="flex items-center gap-2"><BookOpen className="w-4 h-4"/> 교육과정설명회 참석 현황</span>
         </button>
+        {isAdminMode && (
+          <button 
+            onClick={() => setActiveTab('allConsultation')}
+            className={`px-4 py-2 text-sm font-bold rounded-t-lg transition ${activeTab === 'allConsultation' ? 'bg-slate-800 text-amber-400 border-b-2 border-amber-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}
+          >
+            <span className="flex items-center gap-2"><Globe className="w-4 h-4"/> [전체] 학급 상담 신청 현황</span>
+          </button>
+        )}
       </div>
 
-      <div className="overflow-x-auto custom-scrollbar">
-        {activeTab === 'consultation' ? (
+            <div className="overflow-x-auto custom-scrollbar">
+        {activeTab === 'allConsultation' && isAdminMode ? (
+          <table className="w-full text-xs text-left text-slate-300 border-collapse">
+            <thead>
+              <tr className="bg-slate-800/80 text-slate-200 border-b border-slate-700 font-bold">
+                <th className="p-3 whitespace-nowrap">학년/반</th>
+                <th className="p-3 whitespace-nowrap">일시</th>
+                <th className="p-3 whitespace-nowrap">학생 이름</th>
+                <th className="p-3 whitespace-nowrap">보호자 성함</th>
+                <th className="p-3 whitespace-nowrap">연락처</th>
+                <th className="p-3 whitespace-nowrap">상담 형태</th>
+                <th className="p-3">주요 상담 희망 분야</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allEntries.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-10 text-slate-400 font-medium">
+                    <FolderOpen className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+                    전체 학급에 등록된 학부모 상담 예약 내역이 없습니다.
+                  </td>
+                </tr>
+              ) : (
+                allEntries.map((item, idx) => (
+                  <tr key={idx} className="border-b border-slate-800 hover:bg-slate-800/50 transition text-xs">
+                    <td className="p-3 text-slate-300 font-bold whitespace-nowrap">{item.className}</td>
+                    <td className="p-3 font-bold text-amber-400 whitespace-nowrap">{item.dateLabel} {item.time}</td>
+                    <td className="p-3 font-bold text-white whitespace-nowrap">{item.studentName}</td>
+                    <td className="p-3 text-slate-300 whitespace-nowrap">{item.parentName}</td>
+                    <td className="p-3 font-mono text-slate-300 whitespace-nowrap">{item.phone}</td>
+                    <td className="p-3 whitespace-nowrap">
+                      <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${item.type === '방문 상담' ? 'bg-blue-900/80 text-blue-200 border border-blue-700' : 'bg-emerald-900/80 text-emerald-200 border border-emerald-700'}`}>
+                        {item.type}
+                      </span>
+                    </td>
+                    <td className="p-3 text-slate-300 max-w-xs truncate">{item.note || '-'}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        ) : activeTab === 'consultation' ? (
           <table className="w-full text-xs text-left text-slate-300 border-collapse">
             <thead>
               <tr className="bg-slate-800/80 text-slate-200 border-b border-slate-700 font-bold">
