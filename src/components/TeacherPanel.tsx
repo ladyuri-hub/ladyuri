@@ -70,7 +70,7 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
   const allBriefings = Object.entries(briefingSubmissions || {})
     .map(([key, data]: any) => ({
       key,
-      className: key.split('_')[0],
+      className: key.split(' ').slice(0, 2).join(' '),
       studentName: typeof data === 'string' ? '' : (data?.studentName || ''),
       status: typeof data === 'string' ? data : data?.status,
     }))
@@ -80,7 +80,37 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
   const activeBriefingEntries = isAdminMode ? allBriefings : classBriefings;
   const titleText = isAdminMode ? '전체 학급' : currentClass;
 
-    return (
+    
+  const totalBriefingResponses = activeBriefingEntries.length;
+  const totalBriefingAttending = activeBriefingEntries.filter((e: any) => e.status === '참석').length;
+  const totalBriefingNotAttending = activeBriefingEntries.filter((e: any) => e.status === '불참').length;
+  
+  const briefingStatsByClass: Record<string, { total: number, attending: number }> = {};
+  if (isAdminMode) {
+     activeBriefingEntries.forEach((e: any) => {
+         const cls = e.className || e.key.split(' ').slice(0, 2).join(' ');
+         if (!briefingStatsByClass[cls]) {
+             briefingStatsByClass[cls] = { total: 0, attending: 0 };
+         }
+         briefingStatsByClass[cls].total++;
+         if (e.status === '참석') {
+             briefingStatsByClass[cls].attending++;
+         }
+     });
+  }
+
+  const totalConsultationResponses = activeConsultationEntries.length;
+  const consultationStatsByClass: Record<string, number> = {};
+  if (isAdminMode) {
+      activeConsultationEntries.forEach((e: any) => {
+         if (!consultationStatsByClass[e.className]) {
+             consultationStatsByClass[e.className] = 0;
+         }
+         consultationStatsByClass[e.className]++;
+      });
+  }
+
+  return (
     <section className="bg-[#0f172a] text-white rounded-2xl shadow-xl p-5 border border-slate-800 space-y-8">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-slate-800 pb-4">
         <div className="flex items-center gap-2.5">
@@ -125,7 +155,27 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
 
       <div className="space-y-6">
         <div>
-          <h4 className="text-amber-400 font-bold mb-3 flex items-center gap-2 border-b border-slate-700 pb-2"><Users className="w-4 h-4"/> 1. 학부모 상담 신청 현황</h4>
+          <div className="flex items-center justify-between border-b border-slate-700 pb-2 mb-3">
+            <h4 className="text-amber-400 font-bold flex items-center gap-2"><Users className="w-4 h-4"/> 1. 학부모 상담 신청 현황</h4>
+            <div className="text-xs font-bold text-slate-300 bg-slate-800 px-3 py-1 rounded-lg border border-slate-600">
+              총 신청: <span className="text-amber-400">{totalConsultationResponses}</span>건
+            </div>
+          </div>
+          
+          {isAdminMode && Object.keys(consultationStatsByClass).length > 0 && (
+            <div className="mb-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+              <div className="text-xs font-bold text-slate-400 mb-2">학급별 상담 신청 현황 (건)</div>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(consultationStatsByClass)
+                  .sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true }))
+                  .map(([cls, count]) => (
+                  <div key={cls} className="text-[11px] bg-slate-900 px-2 py-1 rounded-md border border-slate-700">
+                    <span className="font-bold text-slate-300">{cls}</span> <span className="text-amber-400">{count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="overflow-x-auto custom-scrollbar max-h-96 border border-slate-700 rounded-lg">
             <table className="w-full text-xs text-left text-slate-300 border-collapse">
               <thead className="sticky top-0 bg-slate-900 z-10 shadow-sm">
@@ -176,7 +226,42 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
         </div>
 
         <div>
-          <h4 className="text-indigo-400 font-bold mb-3 flex items-center gap-2 border-b border-slate-700 pb-2"><BookOpen className="w-4 h-4"/> 2. 교육과정설명회 참석 현황</h4>
+          <div className="flex items-center justify-between border-b border-slate-700 pb-2 mb-3">
+            <h4 className="text-indigo-400 font-bold flex items-center gap-2"><BookOpen className="w-4 h-4"/> 2. 교육과정설명회 참석 현황</h4>
+          </div>
+
+          <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700 mb-3 space-y-3">
+            <div className="flex flex-wrap gap-3">
+              <div className="flex-1 bg-slate-800 py-2 px-3 rounded-lg border border-slate-600/50 text-center">
+                <div className="text-[11px] text-slate-400 mb-0.5">총 응답자 수</div>
+                <div className="text-lg font-bold text-white">{totalBriefingResponses}<span className="text-sm font-normal text-slate-500">명</span></div>
+              </div>
+              <div className="flex-1 bg-indigo-900/30 py-2 px-3 rounded-lg border border-indigo-700/50 text-center">
+                <div className="text-[11px] text-indigo-300 mb-0.5">총 참석 희망</div>
+                <div className="text-lg font-bold text-indigo-400">{totalBriefingAttending}<span className="text-sm font-normal text-indigo-500/50">명</span></div>
+              </div>
+              <div className="flex-1 bg-rose-900/30 py-2 px-3 rounded-lg border border-rose-700/50 text-center">
+                <div className="text-[11px] text-rose-300 mb-0.5">불참</div>
+                <div className="text-lg font-bold text-rose-400">{totalBriefingNotAttending}<span className="text-sm font-normal text-rose-500/50">명</span></div>
+              </div>
+            </div>
+
+            {isAdminMode && Object.keys(briefingStatsByClass).length > 0 && (
+              <div className="pt-2 border-t border-slate-700">
+                <div className="text-xs font-bold text-slate-400 mb-2">학급별 참석 희망 현황 (참석/응답)</div>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(briefingStatsByClass)
+                    .sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true }))
+                    .map(([cls, stats]) => (
+                    <div key={cls} className="text-[11px] bg-slate-900 px-2 py-1 rounded-md border border-slate-700">
+                      <span className="font-bold text-slate-300">{cls}</span> <span className="text-indigo-400">{stats.attending}</span><span className="text-slate-500">/{stats.total}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="overflow-x-auto custom-scrollbar max-h-96 border border-slate-700 rounded-lg">
             <table className="w-full text-xs text-left text-slate-300 border-collapse">
               <thead className="sticky top-0 bg-slate-900 z-10 shadow-sm">
