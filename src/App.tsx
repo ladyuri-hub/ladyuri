@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ClipboardCheck } from 'lucide-react';
+import { ClipboardCheck, AlertTriangle } from 'lucide-react';
 import { AppProvider, useAppContext } from './store';
 import { Header } from './components/Header';
 import { NoticeBoard } from './components/NoticeBoard';
@@ -113,6 +113,16 @@ function MainApp() {
 
       <div className="max-w-7xl mx-auto px-4 mt-5 space-y-5">
         
+                {/* Warning Banner for Parents */}
+        {!isAdminMode && !isTeacherMode && (
+          <div className="bg-rose-100 border-2 border-rose-500 p-4 rounded-xl shadow-sm mb-4 animate-pulse flex items-center justify-center">
+            <p className="text-rose-700 font-black text-sm md:text-base flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              자녀의 [해당 학급] 탭을 먼저 정확하게 클릭하신 후 상담을 신청해 주세요! (현재 선택된 학급: {currentClass})
+            </p>
+          </div>
+        )}
+
         {/* Class Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
           {(!isTeacherMode || isAdminMode) ? classes.map(cls => (
@@ -230,10 +240,11 @@ function MainApp() {
           <TeacherPanel 
             onChangePassword={() => openModal('changePw')}
             onPrint={() => openModal('print')}
-            onConfirmDelete={(slotKey) => openModal('confirm', { slotKey })}
+            onPrintBriefing={() => openModal('printBriefing')}
+            onConfirmDelete={(slotKey, targetClass) => openModal('confirm', { slotKey, targetClass })}
             onConfirmReset={() => openModal('confirm', { type: 'reset' })}
-            onExport={() => exportToCSV(bookings, currentClass, settings.dates, settings.times, (msg) => addToast(msg, 'error'))}
-            onExportBriefing={() => exportBriefingToCSV(briefingSubmissions, (msg) => addToast(msg, 'error'))}
+            onExport={() => exportToCSV(bookings, isAdminMode ? 'all' : currentClass, settings.dates, settings.times, classes, (msg) => addToast(msg, 'error'))}
+            onExportBriefing={() => exportBriefingToCSV(briefingSubmissions, isAdminMode ? 'all' : currentClass, (msg) => addToast(msg, 'error'))}
           />
         )}
 

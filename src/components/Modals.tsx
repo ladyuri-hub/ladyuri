@@ -449,51 +449,57 @@ const ShareModal = ({ onClose }: any) => {
 
 // PrintModal
 const PrintModal = ({ onClose }: any) => {
-  const { bookings, currentClass, settings, addToast } = useAppContext();
-  const classBookings = bookings[currentClass] || {};
+  const { bookings, currentClass, classes, settings, isAdminMode, addToast } = useAppContext();
   
   const entries: any[] = [];
-  settings.dates.forEach(d => {
-    settings.times.forEach(t => {
-      const slotKey = `${d.date}_${t}`;
-      if (classBookings[slotKey]) {
-        entries.push({ dateLabel: d.label, time: t, ...classBookings[slotKey] });
-      }
-    });
+  const targetClasses = isAdminMode ? classes : [currentClass];
+
+  targetClasses.forEach(cls => {
+      const classBookings = bookings[cls] || {};
+      settings.dates.forEach(d => {
+        settings.times.forEach(t => {
+          const slotKey = `${d.date}_${t}`;
+          if (classBookings[slotKey]) {
+            entries.push({ className: cls, dateLabel: d.label, time: t, ...classBookings[slotKey] });
+          }
+        });
+      });
   });
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden border border-slate-100 animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden border border-slate-100 animate-fade-in">
         <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-[#1e293b] text-white no-print">
-          <h3 className="font-bold text-base flex items-center gap-2"><Printer className="w-4 h-4"/> {currentClass} 상담 예약 명단 인쇄</h3>
+          <h3 className="font-bold text-base flex items-center gap-2"><Printer className="w-4 h-4"/> {isAdminMode ? '전체 학급' : currentClass} 상담 예약 명단 인쇄</h3>
           <button onClick={onClose} className="text-white/80 hover:text-white"><X className="w-5 h-5"/></button>
         </div>
         <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar" id="printArea">
-          <h2 className="text-xl font-bold mb-4 print-only hidden">{currentClass} 학부모 상담 예약 명단</h2>
+          <h2 className="text-xl font-bold mb-4 print-only hidden">{isAdminMode ? '전체 학급' : currentClass} 학부모 상담 예약 명단</h2>
           <table className="w-full text-sm text-left border-collapse border border-slate-300">
             <thead>
               <tr className="bg-slate-100 border-b border-slate-300">
+                {isAdminMode && <th className="p-2 border border-slate-300">학년/반</th>}
                 <th className="p-2 border border-slate-300">일시</th>
                 <th className="p-2 border border-slate-300">학생 이름</th>
                 <th className="p-2 border border-slate-300">보호자</th>
                 <th className="p-2 border border-slate-300">연락처</th>
                 <th className="p-2 border border-slate-300">방식</th>
-                <th className="p-2 border border-slate-300">상담내용</th>
+                <th className="p-2 border border-slate-300">비고 (상담 내용)</th>
               </tr>
             </thead>
             <tbody>
               {entries.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center p-4 text-slate-500">예약 내역이 없습니다.</td>
+                  <td colSpan={isAdminMode ? 7 : 6} className="p-8 text-center text-slate-500">예약 내역이 없습니다.</td>
                 </tr>
               ) : (
                 entries.map((item, idx) => (
-                  <tr key={idx} className="border-b border-slate-300">
-                    <td className="p-2 border border-slate-300">{item.dateLabel} {item.time}</td>
+                  <tr key={idx} className="border-b border-slate-200">
+                    {isAdminMode && <td className="p-2 border border-slate-300 font-bold">{item.className}</td>}
+                    <td className="p-2 border border-slate-300 font-bold">{item.dateLabel} {item.time}</td>
                     <td className="p-2 border border-slate-300 font-bold">{item.studentName}</td>
                     <td className="p-2 border border-slate-300">{item.parentName}</td>
-                    <td className="p-2 border border-slate-300">{item.phone}</td>
+                    <td className="p-2 border border-slate-300 font-mono text-xs">{item.phone}</td>
                     <td className="p-2 border border-slate-300">{item.type}</td>
                     <td className="p-2 border border-slate-300 text-xs">{item.note}</td>
                   </tr>
@@ -503,9 +509,6 @@ const PrintModal = ({ onClose }: any) => {
           </table>
         </div>
         <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2 no-print">
-          <button onClick={() => exportToCSV(bookings, currentClass, settings.dates, settings.times, (msg) => addToast(msg, 'error'))} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5">
-            <FileSpreadsheet className="w-4 h-4"/> 엑셀 저장
-          </button>
           <button onClick={() => {
             if (window !== window.parent) {
               addToast('미리보기 환경에서는 보안상 인쇄가 제한됩니다. 우측 상단 "새 탭에서 열기(↗)"를 눌러주세요.', 'error');
@@ -608,7 +611,7 @@ const ConfirmModal = ({ info, onClose }: any) => {
       
       addToast(`'${currentClass}' 데이터가 성공적으로 초기화되었습니다.`, 'amber');
     } else if (info.slotKey) {
-      removeBookingSlot(currentClass, info.slotKey);
+      removeBookingSlot(info.targetClass || currentClass, info.slotKey);
       addToast('예약 내역이 삭제되었습니다.', 'success');
     } else if (info.onOk) {
       info.onOk();
@@ -831,6 +834,75 @@ const PeriodManageModal = ({ onClose }: any) => {
   );
 };
 
+const PrintBriefingModal = ({ onClose }: any) => {
+  const { briefingSubmissions, currentClass, isAdminMode, addToast } = useAppContext();
+  
+  let entries = Object.entries(briefingSubmissions || {});
+  if (!isAdminMode) {
+      entries = entries.filter(([key]) => key.startsWith(currentClass));
+  }
+  
+  entries.sort((a, b) => {
+      const keyA = a[0];
+      const keyB = b[0];
+      return keyA.localeCompare(keyB, undefined, { numeric: true, sensitivity: 'base' });
+  });
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-100 animate-fade-in">
+        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-[#1e293b] text-white no-print">
+          <h3 className="font-bold text-base flex items-center gap-2"><Printer className="w-4 h-4"/> {isAdminMode ? '전체 학급' : currentClass} 설명회 참석 명단 인쇄</h3>
+          <button onClick={onClose} className="text-white/80 hover:text-white"><X className="w-5 h-5"/></button>
+        </div>
+        <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar" id="printArea">
+          <h2 className="text-xl font-bold mb-4 print-only hidden">{isAdminMode ? '전체 학급' : currentClass} 교육과정설명회 참석 명단</h2>
+          <table className="w-full text-sm text-left border-collapse border border-slate-300">
+            <thead>
+              <tr className="bg-slate-100 border-b border-slate-300">
+                <th className="p-2 border border-slate-300">소속(학년 반 번호)</th>
+                <th className="p-2 border border-slate-300">학생 이름</th>
+                <th className="p-2 border border-slate-300">참석 여부</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="p-8 text-center text-slate-500">참석 응답 내역이 없습니다.</td>
+                </tr>
+              ) : (
+                entries.map(([key, data]: any, idx) => {
+                  const status = typeof data === 'string' ? data : data.status;
+                  const studentName = typeof data === 'string' ? '' : (data.studentName || '');
+                  return (
+                    <tr key={idx} className="border-b border-slate-200">
+                      <td className="p-2 border border-slate-300 font-bold">{key}</td>
+                      <td className="p-2 border border-slate-300 font-bold">{studentName}</td>
+                      <td className="p-2 border border-slate-300">{status}</td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2 no-print">
+          <button onClick={() => {
+            if (window !== window.parent) {
+              addToast('미리보기 환경에서는 보안상 인쇄가 제한됩니다. 우측 상단 "새 탭에서 열기(↗)"를 눌러주세요.', 'error');
+              return;
+            }
+            window.print();
+          }} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5">
+            <Printer className="w-4 h-4"/> 인쇄하기
+          </button>
+          <button onClick={onClose} className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-xl text-xs font-bold">닫기</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const AllModals = ({ state, onClose }: { state: any, onClose: (key: string) => void }) => {
   return (
     <>
@@ -842,6 +914,7 @@ export const AllModals = ({ state, onClose }: { state: any, onClose: (key: strin
       {state.classManage && <ClassManageModal onClose={() => onClose('classManage')} />}
       {state.share && <ShareModal onClose={() => onClose('share')} />}
       {state.print && <PrintModal onClose={() => onClose('print')} />}
+      {state.printBriefing && <PrintBriefingModal onClose={() => onClose('printBriefing')} />}
       {state.lookup && <LookupModal onClose={() => onClose('lookup')} />}
       {state.editTitle && <EditTitleModal onClose={() => onClose('editTitle')} />}
       {state.periodManage && <PeriodManageModal onClose={() => onClose('periodManage')} />}
