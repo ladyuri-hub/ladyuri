@@ -50,6 +50,8 @@ interface AppContextType {
   saveAdminPw: (pw: string) => void;
   saveBriefingSubmission: (grade: string, classNum: string, studentNum: string, studentName: string, status: string) => void;
   
+  saveBriefingSubmissions: (subs: Record<string, any>) => void;
+  restoreBackup: (backup: any) => Promise<void>;
   addToast: (message: string, type?: ToastMessage['type']) => void;
   removeToast: (id: number) => void;
   
@@ -116,6 +118,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const loadedTeacherAuth = JSON.parse(sessionStorage.getItem('parent_conference_teacher_auth_classes') || '[]');
     setAuthTeacherClasses(loadedTeacherAuth);
 
+    
     const docRef = doc(db, 'appData', 'global');
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -131,6 +134,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (data.settings) setSettings(data.settings);
         if (data.adminPw) setAdminPw(data.adminPw);
         if (data.briefingSubmissions) setBriefingSubmissions(data.briefingSubmissions);
+
+        // AUTO BACKUP LOGIC (Hourly snapshot)
+        const now = new Date();
+        const krTime = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+        const dateStr = krTime.toISOString().slice(0, 13); // "2026-09-04T09"
+        const backupRef = doc(db, 'backups', `auto_${dateStr}`);
+        setDoc(backupRef, { ...data, timestamp: Date.now(), label: `자동 백업 (${dateStr}시)` }, { merge: true }).catch(() => {});
       } else {
         // Initialize if empty
         setDoc(docRef, {
@@ -223,11 +233,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateGlobalDoc({ adminPw: pw });
   };
 
+  const saveBriefingSubmissions = (subs: Record<string, any>) => {
+    setBriefingSubmissions(subs);
+    updateGlobalDoc({ briefingSubmissions: subs });
+  };
+
   const saveBriefingSubmission = (grade: string, classNum: string, studentNum: string, studentName: string, status: string) => {
     const key = `${grade}학년 ${classNum}반 ${studentNum}번`;
     const newSubmissions = { ...briefingSubmissions, [key]: { studentName, status } };
     setBriefingSubmissions(newSubmissions);
     updateGlobalDoc({ briefingSubmissions: newSubmissions });
+  };
+
+  
+  const restoreBackup = async (backupData: any) => {
+    const docRef = doc(db, 'appData', 'global');
+    const updates = {
+      classes: backupData.classes || DEFAULT_CLASSES,
+      bookings: backupData.bookings || {},
+      disabledSlots: backupData.disabledSlots || {},
+      teacherPasswords: backupData.teacherPasswords || {},
+      mainTitle: backupData.mainTitle || '2026학년도 학부모 상담주간 일정 시스템',
+      settings: backupData.settings || DEFAULT_SETTINGS,
+      adminPw: backupData.adminPw || 'dnsflawnd',
+      briefingSubmissions: backupData.briefingSubmissions || {}
+    };
+    await setDoc(docRef, updates);
+    addToast('데이터가 성공적으로 복원되었습니다. 새로고침합니다.', 'success');
+    setTimeout(() => window.location.reload(), 1500);
   };
 
   return (
@@ -240,7 +273,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       mainTitle, saveMainTitle,
       settings, saveSettings,
       adminPw, saveAdminPw,
-      briefingSubmissions, saveBriefingSubmission,
+      briefingSubmissions, saveBriefingSubmission, saveBriefingSubmissions, restoreBackup,
       toasts, addToast, removeToast
     }}>
       {children}

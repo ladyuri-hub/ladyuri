@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Key, FileSpreadsheet, Printer, Trash2, FolderOpen, Users, BookOpen, Globe } from 'lucide-react';
+import { Key, FileSpreadsheet, Printer, Trash2, FolderOpen, Users, BookOpen, Globe , Upload } from 'lucide-react';
 import { useAppContext } from '../store';
 
 interface TeacherPanelProps {
@@ -78,6 +78,113 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
 
   const activeConsultationEntries = isAdminMode ? allEntries : entries;
   const activeBriefingEntries = isAdminMode ? allBriefings : classBriefings;
+
+  
+  const handleRestoreBriefingCSV = (e: any) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const text = evt.target?.result as string;
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      if (lines.length < 2) {
+        alert('올바른 CSV 파일이 아니거나 데이터가 없습니다.');
+        return;
+      }
+      
+      const newSubmissions = { ...briefingSubmissions };
+      let restoredCount = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i].split(',').map(s => s.replace(/^"|"$/g, '').trim());
+        if (row.length < 3) continue;
+        
+        const classNameFull = row[0]; // e.g. "3학년 3반 12번"
+        const studentName = row[1];
+        const status = row[2]; // "참석" or "불참"
+        
+        if (classNameFull && status) {
+            newSubmissions[classNameFull] = { studentName, status };
+            restoredCount++;
+        }
+      }
+      
+      if (restoredCount > 0) {
+        if (confirm(`총 ${restoredCount}건의 설명회 참석 데이터를 복구하시겠습니까?`)) {
+           saveBriefingSubmissions(newSubmissions);
+           alert('복구가 완료되었습니다. 새로고침을 해주세요.');
+           window.location.reload();
+        }
+      } else {
+        alert('복구할 데이터 형식을 찾을 수 없습니다.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const handleRestoreCSV = (e: any) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const text = evt.target?.result as string;
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      if (lines.length < 2) {
+        alert('올바른 CSV 파일이 아니거나 데이터가 없습니다.');
+        return;
+      }
+      
+      const newBookings = { ...bookings };
+      let restoredCount = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        // Simple CSV parser for "val1","val2"
+        const row = lines[i].split(',').map(s => s.replace(/^"|"$/g, '').trim());
+        if (row.length < 6) continue;
+        
+        const className = row[0];
+        const datetime = row[1]; // e.g. "9월 7일 14:30 ~ 14:45"
+        const studentName = row[2];
+        const parentName = row[3];
+        const phone = row[4];
+        const type = row[5] === '방문 상담' || row[5] === '방문' ? '방문' : '전화';
+        const note = row[6] || '';
+        
+        // Match datetime to settings.dates and settings.times
+        // Extract date label and time
+        const dateMatch = settings.dates.find(d => datetime.startsWith(d.label));
+        if (dateMatch) {
+            const timePart = datetime.replace(dateMatch.label, '').trim();
+            if (settings.times.includes(timePart)) {
+                const slotKey = `${dateMatch.date}_${timePart}`;
+                
+                if (!newBookings[className]) newBookings[className] = {};
+                newBookings[className][slotKey] = {
+                   studentName, parentName, phone, type, note
+                };
+                restoredCount++;
+            }
+        }
+      }
+      
+      if (restoredCount > 0) {
+        if (confirm(`총 ${restoredCount}건의 예약 데이터를 복구하시겠습니까?`)) {
+           saveBookings(newBookings);
+           alert('복구가 완료되었습니다.');
+        }
+      } else {
+        alert('복구할 데이터 형식을 찾을 수 없습니다.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   const titleText = isAdminMode ? '전체 학급' : currentClass;
 
     
@@ -135,9 +242,15 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
           <button onClick={onExportBriefing} className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
             <FileSpreadsheet className="w-4 h-4" /> 설명회 Excel 다운로드
           </button>
-          <button onClick={onPrintBriefing} className="px-3.5 py-2 bg-blue-500 hover:bg-blue-600 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
+                    <button onClick={onPrintBriefing} className="px-3.5 py-2 bg-blue-500 hover:bg-blue-600 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
             <Printer className="w-4 h-4" /> 설명회 명단 인쇄
           </button>
+          {isAdminMode && (
+             <label className="cursor-pointer px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
+               <Upload className="w-4 h-4" /> 다운로드한 Excel로 복구
+               <input type="file" accept=".csv" className="hidden" onChange={handleRestoreCSV} />
+             </label>
+          )}
           <button onClick={onPrint} className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
             <Printer className="w-4 h-4" /> 상담 명단 인쇄
           </button>
@@ -145,11 +258,7 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
             <FileSpreadsheet className="w-4 h-4" /> 설명회 명단 다운로드
           </button>
 
-          {!isAdminMode && (
-            <button onClick={onConfirmReset} className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
-              <Trash2 className="w-4 h-4" /> 학급 데이터 초기화
-            </button>
-          )}
+          
         </div>
       </div>
 
