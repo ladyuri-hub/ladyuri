@@ -19,8 +19,8 @@ export interface AppSettings {
 
 export const DEFAULT_SETTINGS: AppSettings = {
   consultPeriodStr: '2026. 09. 07(월) ~ 09. 11(금)',
-  applyPeriodFullStr: '2026년 8월 31일(월) 09:00 ~ 9월 4일(금) 18:00 (5일간)',
-  applyPeriodShortStr: '8.31(월) 09:00 ~ 9.04(금) 18:00',
+  applyPeriodFullStr: '2026년 8월 31일(월) 09:00 ~ 9월 8일(화) 17:00',
+  applyPeriodShortStr: '8.31(월) 09:00 ~ 9.08(화) 17:00',
   dates: DATES,
   times: TIMES
 };

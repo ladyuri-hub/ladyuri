@@ -13,7 +13,7 @@ interface TeacherPanelProps {
 }
 
 export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, onPrint, onPrintBriefing, onConfirmDelete, onConfirmReset, onExport, onExportBriefing }) => {
-  const { currentClass, classes, bookings, settings, briefingSubmissions, isAdminMode } = useAppContext();
+  const { currentClass, classes, bookings, saveBookings, settings, briefingSubmissions, saveBriefingSubmissions, isAdminMode } = useAppContext();
   
   const classBookings = bookings[currentClass] || {};
   const entries: any[] = [];
@@ -79,7 +79,6 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
   const activeConsultationEntries = isAdminMode ? allEntries : entries;
   const activeBriefingEntries = isAdminMode ? allBriefings : classBriefings;
 
-  
   const handleRestoreBriefingCSV = (e: any) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -94,28 +93,24 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
         return;
       }
       
-      const newSubmissions = { ...briefingSubmissions };
-      let restoredCount = 0;
+      const newSubmissions = JSON.parse(JSON.stringify(briefingSubmissions));
+      let rCount = 0;
 
       for (let i = 1; i < lines.length; i++) {
         const row = lines[i].split(',').map(s => s.replace(/^"|"$/g, '').trim());
         if (row.length < 3) continue;
         
-        const classNameFull = row[0]; // e.g. "3학년 3반 12번"
+        const classNameFull = row[0];
         const studentName = row[1];
-        const status = row[2]; // "참석" or "불참"
+        const status = row[2];
         
         if (classNameFull && status) {
             newSubmissions[classNameFull] = { studentName, status };
-            restoredCount++;
-        }
-      }
-      
-      if (restoredCount > 0) {
-        if (confirm(`총 ${restoredCount}건의 설명회 참석 데이터를 복구하시겠습니까?`)) {
+            rCount++;
+      if (rCount > 0) {
+        if (confirm(`총 ${rCount}건의 설명회 참석 데이터를 복구합니다.\n(현재 입력된 기존 데이터는 지워지지 않고 빈자리에 추가/병합됩니다.)\n계속하시겠습니까?`)) {
            saveBriefingSubmissions(newSubmissions);
-           alert('복구가 완료되었습니다. 새로고침을 해주세요.');
-           window.location.reload();
+           alert('복구가 완료되었습니다.');
         }
       } else {
         alert('복구할 데이터 형식을 찾을 수 없습니다.');
@@ -139,24 +134,21 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
         return;
       }
       
-      const newBookings = { ...bookings };
-      let restoredCount = 0;
+      const newBookings = JSON.parse(JSON.stringify(bookings));
+      let rCount = 0;
 
       for (let i = 1; i < lines.length; i++) {
-        // Simple CSV parser for "val1","val2"
         const row = lines[i].split(',').map(s => s.replace(/^"|"$/g, '').trim());
         if (row.length < 6) continue;
         
         const className = row[0];
-        const datetime = row[1]; // e.g. "9월 7일 14:30 ~ 14:45"
+        const datetime = row[1];
         const studentName = row[2];
         const parentName = row[3];
         const phone = row[4];
         const type = row[5] === '방문 상담' || row[5] === '방문' ? '방문' : '전화';
         const note = row[6] || '';
         
-        // Match datetime to settings.dates and settings.times
-        // Extract date label and time
         const dateMatch = settings.dates.find(d => datetime.startsWith(d.label));
         if (dateMatch) {
             const timePart = datetime.replace(dateMatch.label, '').trim();
@@ -167,13 +159,13 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
                 newBookings[className][slotKey] = {
                    studentName, parentName, phone, type, note
                 };
-                restoredCount++;
+                rCount++;
             }
         }
       }
       
-      if (restoredCount > 0) {
-        if (confirm(`총 ${restoredCount}건의 예약 데이터를 복구하시겠습니까?`)) {
+      if (rCount > 0) {
+        if (confirm(`총 ${rCount}건의 예약 데이터를 복구합니다.\n(현재 새로 접수된 예약은 유지되며, 빈 시간대에만 과거 데이터가 추가/병합됩니다.)\n계속하시겠습니까?`)) {
            saveBookings(newBookings);
            alert('복구가 완료되었습니다.');
         }
@@ -184,6 +176,25 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
     reader.readAsText(file);
     e.target.value = '';
   };
+
+
+  
+
+  
+
+
+  
+  
+
+  
+  
+      
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  
 
   const titleText = isAdminMode ? '전체 학급' : currentClass;
 
