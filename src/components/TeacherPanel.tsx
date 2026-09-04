@@ -86,7 +86,7 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
     const reader = new FileReader();
     reader.onload = (evt) => {
       const text = evt.target?.result as string;
-      const lines = text.split('\n').filter(line => line.trim());
+      const lines = text.split('\n').filter((line: string) => line.trim());
       
       if (lines.length < 2) {
         alert('올바른 CSV 파일이 아니거나 데이터가 없습니다.');
@@ -97,7 +97,7 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
       let rCount = 0;
 
       for (let i = 1; i < lines.length; i++) {
-        const row = lines[i].split(',').map(s => s.replace(/^"|"$/g, '').trim());
+        const row = lines[i].split(',').map((s: string) => s.replace(/^"|"$/g, '').trim());
         if (row.length < 3) continue;
         
         const classNameFull = row[0];
@@ -107,6 +107,9 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
         if (classNameFull && status) {
             newSubmissions[classNameFull] = { studentName, status };
             rCount++;
+        }
+      }
+      
       if (rCount > 0) {
         if (confirm(`총 ${rCount}건의 설명회 참석 데이터를 복구합니다.\n(현재 입력된 기존 데이터는 지워지지 않고 빈자리에 추가/병합됩니다.)\n계속하시겠습니까?`)) {
            saveBriefingSubmissions(newSubmissions);
@@ -127,7 +130,7 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
     const reader = new FileReader();
     reader.onload = (evt) => {
       const text = evt.target?.result as string;
-      const lines = text.split('\n').filter(line => line.trim());
+      const lines = text.split('\n').filter((line: string) => line.trim());
       
       if (lines.length < 2) {
         alert('올바른 CSV 파일이 아니거나 데이터가 없습니다.');
@@ -138,7 +141,7 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
       let rCount = 0;
 
       for (let i = 1; i < lines.length; i++) {
-        const row = lines[i].split(',').map(s => s.replace(/^"|"$/g, '').trim());
+        const row = lines[i].split(',').map((s: string) => s.replace(/^"|"$/g, '').trim());
         if (row.length < 6) continue;
         
         const className = row[0];
@@ -149,7 +152,7 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
         const type = row[5] === '방문 상담' || row[5] === '방문' ? '방문' : '전화';
         const note = row[6] || '';
         
-        const dateMatch = settings.dates.find(d => datetime.startsWith(d.label));
+        const dateMatch = settings.dates.find((d: any) => datetime.startsWith(d.label));
         if (dateMatch) {
             const timePart = datetime.replace(dateMatch.label, '').trim();
             if (settings.times.includes(timePart)) {
@@ -176,25 +179,6 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
     reader.readAsText(file);
     e.target.value = '';
   };
-
-
-  
-
-  
-
-
-  
-  
-
-  
-  
-      
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  };
-
-  
 
   const titleText = isAdminMode ? '전체 학급' : currentClass;
 

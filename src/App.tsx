@@ -115,10 +115,13 @@ function MainApp() {
         
                 {/* Warning Banner for Parents */}
         {!isAdminMode && !isTeacherMode && (
-          <div className="bg-rose-100 border-2 border-rose-500 p-4 rounded-xl shadow-sm mb-4 animate-pulse flex items-center justify-center">
-            <p className="text-rose-700 font-black text-sm md:text-base flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" />
-              자녀의 [해당 학급] 탭을 먼저 정확하게 클릭하신 후 상담을 신청해 주세요! (현재 선택된 학급: {currentClass})
+          <div className="bg-red-500 border-4 border-red-600 p-6 rounded-2xl shadow-xl mb-6 animate-pulse flex flex-col items-center justify-center text-center space-y-2">
+            <p className="text-white font-black text-xl md:text-3xl flex items-center gap-3">
+              <AlertTriangle className="w-8 h-8 md:w-10 md:h-10" />
+              자녀의 [해당 학급] 탭을 반드시 먼저 클릭해주세요!
+            </p>
+            <p className="text-red-100 font-bold text-base md:text-lg">
+              현재 선택된 학급은 <span className="bg-white text-red-600 px-2 py-0.5 rounded shadow-sm text-xl mx-1">{currentClass}</span> 입니다. 학급을 잘못 선택하시면 신청이 누락될 수 있습니다.
             </p>
           </div>
         )}

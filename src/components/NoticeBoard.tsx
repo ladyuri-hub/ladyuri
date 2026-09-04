@@ -1,5 +1,5 @@
 import React from 'react';
-import { Megaphone, CalendarCheck2, CircleDot, CalendarDays, Clock, School, ShieldCheck, Bell, Lightbulb, RefreshCw, Pencil } from 'lucide-react';
+import { AlertTriangle, Megaphone, CalendarCheck2, CircleDot, CalendarDays, Clock, School, ShieldCheck, Bell, Lightbulb, RefreshCw, Pencil } from 'lucide-react';
 import { useAppContext } from '../store';
 
 interface NoticeBoardProps {
@@ -63,6 +63,17 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({ onOpenPeriodManage }) 
             2학기 학부모 개별 상담 희망 시간 신청 안내
           </h3>
 
+          <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 mb-3">
+            <h4 className="text-rose-700 font-bold text-sm mb-1 flex items-center gap-1.5"><AlertTriangle className="w-4 h-4"/> [안내] 상담 신청 내역 확인 요청</h4>
+            <p className="text-xs text-rose-800 leading-relaxed font-medium">
+              시스템 오류로 인해 일부 상담 신청 데이터가 소실되었습니다.<br/>
+              번거로우시겠지만 기존에 신청하신 개인 상담 내역을 다시 한번 확인해 주시고, 신청 내역이 누락된 경우 재신청해 주시기 바랍니다.<br/>
+              이에 따라 상담 신청 기간을 <strong>9월 8일(화)까지 연장</strong>하였습니다.<br/>
+              이용에 불편을 드려 죄송합니다.
+            </p>
+          </div>
+
+
           <div className="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3 mb-3 flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
               <CalendarCheck2 className="w-4 h-4 text-indigo-600" /> [사전 신청 기간] {settings.applyPeriodFullStr}
@@ -104,6 +115,17 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({ onOpenPeriodManage }) 
           </div>
 
           <div className="space-y-3 text-xs text-slate-600">
+
+            <div className="flex items-start gap-2 bg-rose-50 border border-rose-200 p-2 rounded-lg">
+              <span className="font-mono text-rose-600 font-bold whitespace-nowrap mt-0.5">긴급</span>
+              <div className="leading-tight">
+                <p className="font-bold text-rose-700 flex items-center gap-1 mb-1">
+                  <AlertTriangle className="w-3 h-3" /> [안내] 상담 신청 내역 확인 요청
+                </p>
+                <p className="text-rose-800 font-medium">시스템 오류로 인해 데이터가 소실되었습니다. 기존 신청 내역을 확인해 주시고 누락된 경우 재신청해 주시기 바랍니다.</p>
+              </div>
+            </div>
+
             <div className="flex items-start gap-2">
               <span className="font-mono text-blue-600 font-bold whitespace-nowrap">09:00</span>
               <p className="leading-tight"><Megaphone className="w-3 h-3 inline text-slate-400 mr-1" /> <strong>[교무부]</strong> 학부모 상담 신청 기간: {settings.applyPeriodShortStr}</p>
