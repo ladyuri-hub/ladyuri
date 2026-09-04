@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, Megaphone, CalendarCheck2, CircleDot, CalendarDays, Clock, School, ShieldCheck, Bell, Lightbulb, RefreshCw, Pencil } from 'lucide-react';
+import { AlertTriangle, Megaphone, CalendarCheck2, CircleDot, CalendarDays, Clock, School, ShieldCheck, Bell, Lightbulb, RefreshCw, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useAppContext } from '../store';
 
 interface NoticeBoardProps {
@@ -7,8 +7,46 @@ interface NoticeBoardProps {
 }
 
 export const NoticeBoard: React.FC<NoticeBoardProps> = ({ onOpenPeriodManage }) => {
-  const { settings, isAdminMode } = useAppContext();
+  const { settings, isAdminMode, notices, saveNotice, deleteNotice } = useAppContext();
   
+  
+  const handleAddNotice = () => {
+    const author = prompt("작성자를 입력하세요 (예: [교무부], [시스템]):", "[교무부]");
+    if (!author) return;
+    const content = prompt("공지 내용을 입력하세요:");
+    if (!content) return;
+    const iconType = prompt("아이콘 타입을 선택하세요 (1: 공지(Megaphone), 2: 알림(Bell), 3: 팁(Lightbulb), 4: 긴급(Alert)):", "1");
+    
+    let icon: 'megaphone'|'bell'|'lightbulb'|'alert' = 'megaphone';
+    if(iconType === '2') icon = 'bell';
+    else if(iconType === '3') icon = 'lightbulb';
+    else if(iconType === '4') icon = 'alert';
+    
+    const now = new Date();
+    const krTime = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+    const timeStr = krTime.toISOString().slice(11, 16); // HH:mm
+    
+    saveNotice({
+      id: Date.now().toString(),
+      time: timeStr,
+      author,
+      content,
+      icon,
+      timestamp: Date.now()
+    });
+  };
+
+  const getNoticeIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'bell': return <Bell className="w-3 h-3 inline text-amber-500 mr-1" />;
+      case 'lightbulb': return <Lightbulb className="w-3 h-3 inline text-amber-500 mr-1" />;
+      case 'alert': return <AlertTriangle className="w-3 h-3 inline text-rose-500 mr-1" />;
+      case 'megaphone':
+      default:
+        return <Megaphone className="w-3 h-3 inline text-slate-400 mr-1" />;
+    }
+  };
+
   const handleRefresh = () => {
     window.dispatchEvent(new Event('refresh'));
   };
@@ -112,9 +150,30 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({ onOpenPeriodManage }) 
             <h4 className="font-bold text-sm text-slate-800 flex items-center gap-2">
               <Bell className="w-4 h-4 text-amber-500" /> 실시간 변경/공지 게시판
             </h4>
+            {isAdminMode && (
+              <button onClick={handleAddNotice} className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition" title="새 공지 작성">
+                <Plus className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
-          <div className="space-y-3 text-xs text-slate-600">
+          
+          <div className="space-y-3 text-xs text-slate-600 overflow-y-auto max-h-[300px] custom-scrollbar pr-1">
+            {notices && notices.sort((a,b) => b.timestamp - a.timestamp).map(n => (
+              <div key={n.id} className="flex items-start gap-2 group relative">
+                <span className="font-mono text-blue-600 font-bold whitespace-nowrap">{n.time}</span>
+                <p className="leading-tight flex-1">
+                  {getNoticeIcon(n.icon)}
+                  <strong>{n.author}</strong> {n.content}
+                </p>
+                {isAdminMode && (
+                  <button onClick={() => deleteNotice(n.id)} className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-300 hover:text-rose-500 transition absolute -right-2 -top-1">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+
 
             <div className="flex items-start gap-2 bg-rose-50 border border-rose-200 p-2 rounded-lg">
               <span className="font-mono text-rose-600 font-bold whitespace-nowrap mt-0.5">긴급</span>

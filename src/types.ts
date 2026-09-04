@@ -34,3 +34,12 @@ export const TIMES = [
 ];
 
 export const ADMIN_PW = 'admin1234';
+
+export interface NoticeItem {
+  id: string;
+  time: string;
+  icon: 'megaphone' | 'bell' | 'lightbulb' | 'alert';
+  author: string;
+  content: string;
+  timestamp: number;
+}

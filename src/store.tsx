@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Booking, DEFAULT_CLASSES, DATES, TIMES } from './types';
+import { Booking, DEFAULT_CLASSES, DATES, TIMES, NoticeItem } from './types';
 import { db } from './lib/firebase';
 import { doc, onSnapshot, setDoc, updateDoc, deleteField } from 'firebase/firestore';
 
@@ -38,6 +38,7 @@ interface AppContextType {
   
   mainTitle: string;
   settings: AppSettings;
+  notices: NoticeItem[];
   adminPw: string;
   briefingSubmissions: Record<string, any>;
   
@@ -68,15 +69,22 @@ const AppContext = createContext<AppContextType | null>(null);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [classes, setClasses] = useState<string[]>(DEFAULT_CLASSES);
-  const [currentClassState, setCurrentClassState] = useState<string>('3학년 3반');
+  const [currentClassState, setCurrentClassState] = useState<string>('1학년 1반');
   const [isAdminModeState, setIsAdminModeState] = useState(false);
   const [authTeacherClasses, setAuthTeacherClasses] = useState<string[]>([]);
   
   const currentClass = currentClassState;
   const setCurrentClass = (cls: string | ((prev: string) => string)) => {
-    setCurrentClassState(cls);
-    setAuthTeacherClasses([]); // 다른 반 클릭 시 담임모드 즉시 해제
-    sessionStorage.removeItem('parent_conference_teacher_auth_classes');
+    setCurrentClassState(prev => {
+      const nextClass = typeof cls === 'function' ? cls(prev) : cls;
+      if (prev !== nextClass) {
+        setTimeout(() => {
+          setAuthTeacherClasses([]); // 다른 반 클릭 시 담임모드 즉시 해제
+          sessionStorage.removeItem('parent_conference_teacher_auth_classes');
+        }, 0);
+      }
+      return nextClass;
+    });
   };
   
   const isAdminMode = isAdminModeState;
@@ -103,14 +111,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [bookings, setBookings] = useState<Record<string, Record<string, Booking>>>({});
   const [disabledSlots, setDisabledSlots] = useState<Record<string, Record<string, boolean>>>({});
   const defaultTeacherPasswords = {
-  '1학년 1반': '1111', '1학년 2반': '2222', '1학년 3반': '3333',
-  '2학년 1반': '1111', '2학년 2반': '2222', '2학년 3반': '3333', '2학년 4반': '4444',
-  '3학년 1반': '1111', '3학년 2반': '2222', '3학년 3반': '3333'
+  '1학년 1반': '2601', '1학년 2반': '2602', '1학년 3반': '2603',
+  '2학년 1반': '2621', '2학년 2반': '2622', '2학년 3반': '2623', '2학년 4반': '2624',
+  '3학년 1반': '2631', '3학년 2반': '2632', '3학년 3반': '2633'
 };
   const [teacherPasswords, setTeacherPasswords] = useState<Record<string, string>>(defaultTeacherPasswords);
   const [searchQuery, setSearchQuery] = useState('');
   const [mainTitle, setMainTitle] = useState('2026학년도 학부모 상담주간 일정 시스템');
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [notices, setNotices] = useState<NoticeItem[]>([]);
   const [adminPw, setAdminPw] = useState('admin1234');
   const [briefingSubmissions, setBriefingSubmissions] = useState<Record<string, string>>({});
   
@@ -137,6 +146,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (data.teacherPasswords) { setTeacherPasswords({ ...defaultTeacherPasswords, ...data.teacherPasswords }); }
         if (data.mainTitle) setMainTitle(data.mainTitle);
         if (data.settings) setSettings(data.settings);
+        if (data.notices) setNotices(data.notices);
         if (data.adminPw) setAdminPw(data.adminPw);
         if (data.briefingSubmissions) setBriefingSubmissions(data.briefingSubmissions);
 
@@ -228,6 +238,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateGlobalDoc({ mainTitle: newTitle });
   };
 
+  
+  const saveNotice = (notice: NoticeItem) => {
+    const newNotices = [notice, ...notices];
+    updateGlobalDoc({ notices: newNotices });
+  };
+  const deleteNotice = (id: string) => {
+    const newNotices = notices.filter(n => n.id !== id);
+    updateGlobalDoc({ notices: newNotices });
+  };
+
   const saveSettings = (newSettings: AppSettings) => {
     setSettings(newSettings);
     updateGlobalDoc({ settings: newSettings });
@@ -276,7 +296,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       teacherPasswords, saveTeacherPw, saveClasses,
       searchQuery, setSearchQuery,
       mainTitle, saveMainTitle,
-      settings, saveSettings,
+      settings, saveSettings, notices, saveNotice, deleteNotice,
       adminPw, saveAdminPw,
       briefingSubmissions, saveBriefingSubmission, saveBriefingSubmissions, restoreBackup,
       toasts, addToast, removeToast

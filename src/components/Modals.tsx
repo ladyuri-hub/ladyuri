@@ -201,7 +201,16 @@ const TeacherAuthModal = ({ onClose }: any) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const expected = teacherPasswords[currentClass] || (currentClass.includes('1반') ? '1111' : currentClass.includes('2반') ? '2222' : currentClass.includes('3반') ? '3333' : currentClass.includes('4반') ? '4444' : '1234');
+    const expected = teacherPasswords[currentClass] || (() => {
+      const match = currentClass.match(/(\d+)학년\s*(\d+)반/);
+      if (match) {
+        const grade = parseInt(match[1]);
+        const classNum = parseInt(match[2]);
+        const gradeDigit = grade === 1 ? '0' : grade === 2 ? '2' : grade === 3 ? '3' : '0';
+        return '26' + gradeDigit + classNum;
+      }
+      return '1234';
+    })();
     if (pw === expected) {
       setIsTeacherMode(true);
       setIsAdminMode(false);
@@ -212,7 +221,16 @@ const TeacherAuthModal = ({ onClose }: any) => {
     }
   };
 
-  const expectedPw = teacherPasswords[currentClass] || (currentClass.includes('1반') ? '1111' : currentClass.includes('2반') ? '2222' : currentClass.includes('3반') ? '3333' : currentClass.includes('4반') ? '4444' : '1234');
+  const expectedPw = teacherPasswords[currentClass] || (() => {
+      const match = currentClass.match(/(\d+)학년\s*(\d+)반/);
+      if (match) {
+        const grade = parseInt(match[1]);
+        const classNum = parseInt(match[2]);
+        const gradeDigit = grade === 1 ? '0' : grade === 2 ? '2' : grade === 3 ? '3' : '0';
+        return '26' + gradeDigit + classNum;
+      }
+      return '1234';
+    })();
   const isDefaultPw = expectedPw === '1234';
 
   return (
@@ -286,7 +304,16 @@ const ChangePwModal = ({ onClose }: any) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const expected = teacherPasswords[currentClass] || (currentClass.includes('1반') ? '1111' : currentClass.includes('2반') ? '2222' : currentClass.includes('3반') ? '3333' : currentClass.includes('4반') ? '4444' : '1234');
+    const expected = teacherPasswords[currentClass] || (() => {
+      const match = currentClass.match(/(\d+)학년\s*(\d+)반/);
+      if (match) {
+        const grade = parseInt(match[1]);
+        const classNum = parseInt(match[2]);
+        const gradeDigit = grade === 1 ? '0' : grade === 2 ? '2' : grade === 3 ? '3' : '0';
+        return '26' + gradeDigit + classNum;
+      }
+      return '1234';
+    })();
     if (!isAdminMode && cur !== expected) {
       addToast('현재 비밀번호가 일치하지 않습니다.', 'error');
       return;
@@ -527,27 +554,66 @@ const PrintModal = ({ onClose }: any) => {
 
 // LookupModal
 const LookupModal = ({ onClose }: any) => {
-  const { currentClass, bookings, addToast, settings } = useAppContext();
+  const { classes, bookings, addToast, settings } = useAppContext();
+  const [selectedClass, setSelectedClass] = useState(classes[0] || '');
   const [name, setName] = useState('');
   const [pw, setPw] = useState('');
+  const [phone, setPhone] = useState('');
+  const [parentName, setParentName] = useState('');
+  
   const [result, setResult] = useState<any[]>([]);
   const [searched, setSearched] = useState(false);
+  const [lookupMode, setLookupMode] = useState<'simple' | 'edit' | 'find_pw'>('simple');
 
   const handleLookup = () => {
-    if (!name || !pw) {
-      addToast('이름과 비밀번호를 모두 입력해주세요.', 'error');
+    if (!name) {
+      addToast('학생 성함을 입력해주세요.', 'error');
       return;
     }
-
-    const classBookings = bookings[currentClass] || {};
+    
+    const classBookings = bookings[selectedClass] || {};
     const found = [];
     
-    for (const d of settings.dates) {
-      for (const t of settings.times) {
-        const key = `${d.date}_${t}`;
-        const b = classBookings[key];
-        if (b && b.studentName === name && b.password === pw) {
-          found.push({ date: d.label, time: t, ...b });
+    if (lookupMode === 'simple') {
+      if (!phone) {
+        addToast('연락처 뒷자리(4자리)를 입력해주세요.', 'error');
+        return;
+      }
+      for (const d of settings.dates) {
+        for (const t of settings.times) {
+          const key = `${d.date}_${t}`;
+          const b = classBookings[key];
+          if (b && b.studentName === name && b.phone && b.phone.endsWith(phone)) {
+            found.push({ date: d.label, time: t, ...b, _mode: 'simple' });
+          }
+        }
+      }
+    } else if (lookupMode === 'edit') {
+      if (!pw) {
+        addToast('비밀번호를 입력해주세요.', 'error');
+        return;
+      }
+      for (const d of settings.dates) {
+        for (const t of settings.times) {
+          const key = `${d.date}_${t}`;
+          const b = classBookings[key];
+          if (b && b.studentName === name && b.password === pw) {
+            found.push({ date: d.label, time: t, ...b, _mode: 'edit' });
+          }
+        }
+      }
+    } else if (lookupMode === 'find_pw') {
+      if (!parentName || !phone) {
+        addToast('학부모 성함과 연락처를 모두 정확히 입력해주세요.', 'error');
+        return;
+      }
+      for (const d of settings.dates) {
+        for (const t of settings.times) {
+          const key = `${d.date}_${t}`;
+          const b = classBookings[key];
+          if (b && b.studentName === name && b.parentName === parentName && b.phone === phone) {
+            found.push({ date: d.label, time: t, ...b, _mode: 'find_pw' });
+          }
         }
       }
     }
@@ -560,18 +626,64 @@ const LookupModal = ({ onClose }: any) => {
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border border-slate-100 animate-fade-in">
         <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-700 text-white">
-          <h3 className="font-bold text-base flex items-center gap-2"><Search className="w-4 h-4"/> 내 예약 조회</h3>
+          <h3 className="font-bold text-base flex items-center gap-2"><Search className="w-4 h-4"/> 내 예약 조회/변경</h3>
           <button onClick={onClose} className="text-white/80 hover:text-white"><X className="w-5 h-5"/></button>
         </div>
-        <div className="p-5 space-y-4">
+        
+        <div className="flex border-b border-slate-100 text-[11px]">
+          <button onClick={() => { setLookupMode('simple'); setSearched(false); }} className={`flex-1 py-3 font-bold transition ${lookupMode === 'simple' ? 'bg-emerald-50 text-emerald-700 border-b-2 border-emerald-600' : 'text-slate-500 hover:bg-slate-50'}`}>
+            간편 조회
+          </button>
+          <button onClick={() => { setLookupMode('edit'); setSearched(false); }} className={`flex-1 py-3 font-bold transition ${lookupMode === 'edit' ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600' : 'text-slate-500 hover:bg-slate-50'}`}>
+            예약 변경(수정)
+          </button>
+          <button onClick={() => { setLookupMode('find_pw'); setSearched(false); }} className={`flex-1 py-3 font-bold transition ${lookupMode === 'find_pw' ? 'bg-rose-50 text-rose-700 border-b-2 border-rose-500' : 'text-slate-500 hover:bg-slate-50'}`}>
+            비밀번호 분실
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">소속 반</label>
+            <select value={selectedClass} onChange={e=>setSelectedClass(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-slate-500 focus:outline-none">
+              {classes.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">학생 성함</label>
             <input type="text" value={name} onChange={e=>setName(e.target.value)} placeholder="예: 김민수" className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-slate-500 focus:outline-none" />
           </div>
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">비밀번호 (4자리)</label>
-            <input type="password" value={pw} onChange={e=>setPw(e.target.value)} maxLength={4} placeholder="숫자 4자리" className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-slate-500 focus:outline-none" />
-          </div>
+          
+          {lookupMode === 'simple' && (
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">연락처 뒷자리 (4자리)</label>
+              <input type="text" value={phone} onChange={e=>setPhone(e.target.value)} maxLength={4} placeholder="예: 5678" className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-slate-500 focus:outline-none" />
+              <p className="text-[10px] text-emerald-600 mt-1 font-medium">* 간편 조회 시 예약 접수 여부와 시간만 확인할 수 있습니다.</p>
+            </div>
+          )}
+
+          {lookupMode === 'edit' && (
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">비밀번호 (4자리)</label>
+              <input type="password" value={pw} onChange={e=>setPw(e.target.value)} maxLength={4} placeholder="숫자 4자리" className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-slate-500 focus:outline-none" />
+              <p className="text-[10px] text-blue-600 mt-1 font-medium">* 예약 취소/변경 시 기존 신청한 4자리 비밀번호가 필요합니다.</p>
+            </div>
+          )}
+
+          {lookupMode === 'find_pw' && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">학부모 성함</label>
+                <input type="text" value={parentName} onChange={e=>setParentName(e.target.value)} placeholder="예: 이영희" className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-slate-500 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">연락처 전체</label>
+                <input type="text" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="예: 010-1234-5678" className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-slate-500 focus:outline-none" />
+              </div>
+              <p className="text-[10px] text-rose-600 mt-1 font-medium">* 신청 시 입력했던 정보와 완벽히 일치해야 비밀번호를 확인할 수 있습니다.</p>
+            </div>
+          )}
+
           <button onClick={handleLookup} className="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs shadow-sm transition">
             조회하기
           </button>
@@ -580,9 +692,29 @@ const LookupModal = ({ onClose }: any) => {
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-2">
               {result.length > 0 ? result.map((r, i) => (
                 <div key={i} className="border-b border-slate-200 pb-2 mb-2 last:border-0 last:pb-0 last:mb-0">
-                  <p className="font-bold text-blue-700">{r.date} {r.time}</p>
-                  <p>학생: {r.studentName} | 부모: {r.parentName}</p>
-                  <p>방식: {r.type}</p>
+                  <p className="font-bold text-blue-700 mb-1">{r.date} {r.time}</p>
+                  <p>학생: {r.studentName}</p>
+                  
+                  {r._mode === 'edit' && (
+                     <>
+                        <p>보호자: {r.parentName}</p>
+                        <p>연락처: {r.phone}</p>
+                        <p>방식: {r.type}</p>
+                     </>
+                  )}
+
+                  {r._mode === 'simple' && (
+                     <div className="mt-2 p-2 bg-emerald-100/50 rounded border border-emerald-200 text-[10px] text-emerald-800 font-medium">
+                       <strong>[안내]</strong> 해당 시간에 예약이 완료된 상태입니다.<br/>예약 취소 및 상세 내역 수정을 원하시면 <strong>[예약 변경(수정)]</strong> 탭을 이용해 주세요.
+                     </div>
+                  )}
+
+                  {r._mode === 'find_pw' && (
+                     <div className="mt-2 p-3 bg-rose-50 rounded-lg border border-rose-200 text-xs text-rose-800 font-medium">
+                       고객님의 예약 비밀번호는 <strong className="text-rose-600 text-sm">{r.password}</strong> 입니다.<br/>
+                       예약을 수정하거나 취소하시려면 상단의 <strong>[예약 변경(수정)]</strong> 탭으로 이동하여 위 비밀번호로 다시 로그인해 주세요.
+                     </div>
+                  )}
                 </div>
               )) : (
                 <p className="text-slate-500 text-center py-2">일치하는 예약 내역이 없습니다.</p>

@@ -123,60 +123,97 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
     e.target.value = '';
   };
 
-  const handleRestoreCSV = (e: any) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const handleRestoreCSV = async (e: any) => {
+    const files = Array.from(e.target.files) as File[];
+    if (files.length === 0) return;
 
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const text = evt.target?.result as string;
-      const lines = text.split('\n').filter((line: string) => line.trim());
-      
-      if (lines.length < 2) {
-        alert('올바른 CSV 파일이 아니거나 데이터가 없습니다.');
-        return;
-      }
-      
-      const newBookings = JSON.parse(JSON.stringify(bookings));
-      let rCount = 0;
+    let newBookings = JSON.parse(JSON.stringify(bookings));
+    let totalRCount = 0;
+    let totalSkipCount = 0;
+    let errorFiles = 0;
 
-      for (let i = 1; i < lines.length; i++) {
-        const row = lines[i].split(',').map((s: string) => s.replace(/^"|"$/g, '').trim());
-        if (row.length < 6) continue;
-        
-        const className = row[0];
-        const datetime = row[1];
-        const studentName = row[2];
-        const parentName = row[3];
-        const phone = row[4];
-        const type = row[5] === '방문 상담' || row[5] === '방문' ? '방문' : '전화';
-        const note = row[6] || '';
-        
-        const dateMatch = settings.dates.find((d: any) => datetime.startsWith(d.label));
-        if (dateMatch) {
-            const timePart = datetime.replace(dateMatch.label, '').trim();
-            if (settings.times.includes(timePart)) {
-                const slotKey = `${dateMatch.date}_${timePart}`;
-                
-                if (!newBookings[className]) newBookings[className] = {};
-                newBookings[className][slotKey] = {
-                   studentName, parentName, phone, type, note
-                };
-                rCount++;
+    const readFile = (file: File): Promise<void> => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          try {
+            const buffer = evt.target?.result as ArrayBuffer;
+            let text = new TextDecoder('utf-8').decode(buffer);
+            
+            if (text.includes('') || !/[가-힣]/.test(text)) {
+              text = new TextDecoder('euc-kr').decode(buffer);
             }
-        }
-      }
-      
-      if (rCount > 0) {
-        if (confirm(`총 ${rCount}건의 예약 데이터를 복구합니다.\n(현재 새로 접수된 예약은 유지되며, 빈 시간대에만 과거 데이터가 추가/병합됩니다.)\n계속하시겠습니까?`)) {
-           saveBookings(newBookings);
-           alert('복구가 완료되었습니다.');
-        }
-      } else {
-        alert('복구할 데이터 형식을 찾을 수 없습니다.');
-      }
+
+            const lines = text.split('\n').filter((line: string) => line.trim());
+            if (lines.length < 2) {
+              errorFiles++;
+              resolve();
+              return;
+            }
+
+            for (let i = 1; i < lines.length; i++) {
+              const row = lines[i].split(',').map((s: string) => s.replace(/^"|"$/g, '').trim());
+              if (row.length < 6) continue;
+              
+              const className = row[0];
+              const datetime = row[1];
+              const studentName = row[2];
+              const parentName = row[3];
+              const phone = row[4];
+              const type = row[5] === '방문 상담' || row[5] === '방문' ? '방문' : '전화';
+              const note = row[6] || '';
+              
+              const dateMatch = settings.dates.find((d: any) => datetime.startsWith(d.label));
+              if (dateMatch) {
+                  const timePart = datetime.replace(dateMatch.label, '').trim();
+                  if (settings.times.includes(timePart)) {
+                      const slotKey = `${dateMatch.date}_${timePart}`;
+                      
+                      if (!newBookings[className]) newBookings[className] = {};
+                      
+                      if (newBookings[className][slotKey]) {
+                          totalSkipCount++;
+                          continue;
+                      }
+                      
+                      const isStudentAlreadyBooked = Object.values(newBookings[className]).some(
+                          (b: any) => b.studentName === studentName
+                      );
+                      
+                      if (isStudentAlreadyBooked) {
+                          totalSkipCount++;
+                          continue;
+                      }
+
+                      newBookings[className][slotKey] = {
+                         studentName, parentName, phone, type, note
+                      };
+                      totalRCount++;
+                  }
+              }
+            }
+          } catch(err) {
+            errorFiles++;
+          }
+          resolve();
+        };
+        reader.readAsArrayBuffer(file);
+      });
     };
-    reader.readAsText(file);
+
+    for (const file of files) {
+      await readFile(file);
+    }
+
+    if (totalRCount > 0 || totalSkipCount > 0) {
+      const msg = `총 ${files.length}개 파일 복구 분석 완료:\n\n- 새로 추가된 예약: ${totalRCount}건\n- 중복/건너뜀: ${totalSkipCount}건` + (errorFiles > 0 ? `\n- 오류/빈 파일: ${errorFiles}개` : '');
+      if (confirm(msg + '\n\n계속하여 저장하시겠습니까?')) {
+         saveBookings(newBookings);
+         alert('적용이 완료되었습니다.');
+      }
+    } else {
+      alert('추가할 수 있는 새로운 데이터가 없습니다.');
+    }
     e.target.value = '';
   };
 
@@ -243,7 +280,7 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
           {isAdminMode && (
              <label className="cursor-pointer px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
                <Upload className="w-4 h-4" /> 다운로드한 Excel로 복구
-               <input type="file" accept=".csv" className="hidden" onChange={handleRestoreCSV} />
+               <input type="file" accept=".csv" multiple className="hidden" onChange={handleRestoreCSV} />
              </label>
           )}
           <button onClick={onPrint} className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
