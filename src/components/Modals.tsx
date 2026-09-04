@@ -201,7 +201,7 @@ const TeacherAuthModal = ({ onClose }: any) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const expected = teacherPasswords[currentClass] || '1234';
+    const expected = teacherPasswords[currentClass] || (currentClass.includes('1반') ? '1111' : currentClass.includes('2반') ? '2222' : currentClass.includes('3반') ? '3333' : currentClass.includes('4반') ? '4444' : '1234');
     if (pw === expected) {
       setIsTeacherMode(true);
       setIsAdminMode(false);
@@ -212,7 +212,7 @@ const TeacherAuthModal = ({ onClose }: any) => {
     }
   };
 
-  const expectedPw = teacherPasswords[currentClass] || '1234';
+  const expectedPw = teacherPasswords[currentClass] || (currentClass.includes('1반') ? '1111' : currentClass.includes('2반') ? '2222' : currentClass.includes('3반') ? '3333' : currentClass.includes('4반') ? '4444' : '1234');
   const isDefaultPw = expectedPw === '1234';
 
   return (
@@ -286,7 +286,7 @@ const ChangePwModal = ({ onClose }: any) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const expected = teacherPasswords[currentClass] || '1234';
+    const expected = teacherPasswords[currentClass] || (currentClass.includes('1반') ? '1111' : currentClass.includes('2반') ? '2222' : currentClass.includes('3반') ? '3333' : currentClass.includes('4반') ? '4444' : '1234');
     if (!isAdminMode && cur !== expected) {
       addToast('현재 비밀번호가 일치하지 않습니다.', 'error');
       return;

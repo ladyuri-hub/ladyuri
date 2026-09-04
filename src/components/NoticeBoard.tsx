@@ -15,7 +15,7 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({ onOpenPeriodManage }) 
 
   const now = new Date();
   const openTime = new Date('2026-08-31T09:00:00+09:00');
-  const closeTime = new Date('2026-09-04T18:00:00+09:00');
+  const closeTime = new Date('2026-09-08T17:00:00+09:00');
 
   let statusBadge = null;
   if (now.getTime() < openTime.getTime()) {

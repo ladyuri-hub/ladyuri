@@ -102,7 +102,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [bookings, setBookings] = useState<Record<string, Record<string, Booking>>>({});
   const [disabledSlots, setDisabledSlots] = useState<Record<string, Record<string, boolean>>>({});
-  const [teacherPasswords, setTeacherPasswords] = useState<Record<string, string>>({});
+  const defaultTeacherPasswords = {
+  '1학년 1반': '1111', '1학년 2반': '2222', '1학년 3반': '3333',
+  '2학년 1반': '1111', '2학년 2반': '2222', '2학년 3반': '3333', '2학년 4반': '4444',
+  '3학년 1반': '1111', '3학년 2반': '2222', '3학년 3반': '3333'
+};
+  const [teacherPasswords, setTeacherPasswords] = useState<Record<string, string>>(defaultTeacherPasswords);
   const [searchQuery, setSearchQuery] = useState('');
   const [mainTitle, setMainTitle] = useState('2026학년도 학부모 상담주간 일정 시스템');
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
@@ -129,7 +134,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
         if (data.bookings) setBookings(data.bookings);
         if (data.disabledSlots) setDisabledSlots(data.disabledSlots);
-        if (data.teacherPasswords) setTeacherPasswords(data.teacherPasswords);
+        if (data.teacherPasswords) { setTeacherPasswords({ ...defaultTeacherPasswords, ...data.teacherPasswords }); }
         if (data.mainTitle) setMainTitle(data.mainTitle);
         if (data.settings) setSettings(data.settings);
         if (data.adminPw) setAdminPw(data.adminPw);
@@ -147,7 +152,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           classes: DEFAULT_CLASSES,
           bookings: {},
           disabledSlots: {},
-          teacherPasswords: {},
+          teacherPasswords: defaultTeacherPasswords,
           mainTitle: '2026학년도 학부모 상담주간 일정 시스템',
           settings: DEFAULT_SETTINGS,
           adminPw: 'admin1234',

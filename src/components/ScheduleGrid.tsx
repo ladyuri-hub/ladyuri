@@ -140,7 +140,7 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({ onOpenBooking, onOpe
                           onClick={() => {
                             const now = new Date();
                             const openTime = new Date('2026-08-31T09:00:00+09:00'); // KST 9:00 AM
-                            const closeTime = new Date('2026-09-04T18:00:00+09:00'); // KST 6:00 PM
+                            const closeTime = new Date('2026-09-08T17:00:00+09:00'); // KST 5:00 PM
                             if (!isAdminMode && !isTeacherMode && now.getTime() > closeTime.getTime()) {
                               alert('상담 신청 기간이 종료되었습니다.'); addToast('상담 신청 기간이 종료되었습니다.', 'error');
                               return;
