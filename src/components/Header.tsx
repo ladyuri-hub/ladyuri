@@ -68,7 +68,7 @@ export const Header: React.FC<HeaderProps> = ({
               <Share2 className="w-4 h-4" /> 학부모용 안내문/링크 공유
             </button>
             <button onClick={onOpenLookup} className="px-3.5 py-2 bg-slate-700 hover:bg-slate-600 text-slate-100 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
-              <Search className="w-4 h-4" /> 내 예약 조회/변경
+              <Search className="w-4 h-4" /> 내 예약 조회
             </button>
             <button onClick={handleTeacherClick} className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition flex items-center gap-1.5 shadow-sm ${isTeacherMode ? 'bg-amber-600 text-amber-950 ring-2 ring-amber-300' : 'bg-amber-500 hover:bg-amber-600 text-amber-950'}`}>
               <UserRound className="w-4 h-4" /> {isTeacherMode ? '담임 모드 (ON)' : '담임 모드'}
