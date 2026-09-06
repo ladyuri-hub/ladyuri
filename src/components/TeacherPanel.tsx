@@ -123,6 +123,7 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
     e.target.value = '';
   };
 
+  
   const handleRestoreCSV = async (e: any) => {
     const files = Array.from(e.target.files) as File[];
     if (files.length === 0) return;
@@ -267,7 +268,7 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
           
                     <button onClick={onExport} className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
             <FileSpreadsheet className="w-4 h-4" /> 명단 Excel 다운로드
-          </button>
+                    </button>
           <button onClick={onPrint} className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
             <Printer className="w-4 h-4" /> 상담 명단 인쇄
           </button>
@@ -289,6 +290,12 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
           <button onClick={onExportBriefing} className="px-3.5 py-2 bg-blue-500 hover:bg-blue-600 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
             <FileSpreadsheet className="w-4 h-4" /> 설명회 명단 다운로드
           </button>
+          {isAdminMode && (
+             <label className="cursor-pointer px-3.5 py-2 bg-rose-500 hover:bg-rose-600 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
+               <Upload className="w-4 h-4" /> 설명회 Excel 복구
+               <input type="file" accept=".csv" multiple className="hidden" onChange={handleRestoreBriefingCSV} />
+             </label>
+          )}
 
           
         </div>
