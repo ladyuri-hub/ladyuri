@@ -140,7 +140,7 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
             const buffer = evt.target?.result as ArrayBuffer;
             let text = new TextDecoder('utf-8').decode(buffer);
             
-            if (text.includes('') || !/[가-힣]/.test(text)) {
+            if (text.includes('\ufffd') || !/[가-힣]/.test(text)) {
               text = new TextDecoder('euc-kr').decode(buffer);
             }
 

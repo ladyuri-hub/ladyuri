@@ -120,7 +120,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [mainTitle, setMainTitle] = useState('2026학년도 학부모 상담주간 일정 시스템');
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [notices, setNotices] = useState<NoticeItem[]>([]);
-  const [adminPw, setAdminPw] = useState('admin1234');
+  const [adminPw, setAdminPw] = useState('dnsflawnd');
   const [briefingSubmissions, setBriefingSubmissions] = useState<Record<string, string>>({});
   
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -147,7 +147,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (data.mainTitle) setMainTitle(data.mainTitle);
         if (data.settings) setSettings(data.settings);
         if (data.notices) setNotices(data.notices);
-        if (data.adminPw) setAdminPw(data.adminPw);
+        if (data.adminPw) {
+          setAdminPw(data.adminPw);
+          if (data.adminPw === 'admin1234') {
+            setDoc(docRef, { adminPw: 'dnsflawnd' }, { merge: true });
+            setAdminPw('dnsflawnd');
+          }
+        }
         if (data.briefingSubmissions) setBriefingSubmissions(data.briefingSubmissions);
 
         // AUTO BACKUP LOGIC (Hourly snapshot)
@@ -165,7 +171,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           teacherPasswords: defaultTeacherPasswords,
           mainTitle: '2026학년도 학부모 상담주간 일정 시스템',
           settings: DEFAULT_SETTINGS,
-          adminPw: 'admin1234',
+          adminPw: 'dnsflawnd',
           briefingSubmissions: {}
         });
       }
