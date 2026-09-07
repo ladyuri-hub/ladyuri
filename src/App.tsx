@@ -147,7 +147,7 @@ function MainApp() {
 
         <NoticeBoard onOpenPeriodManage={() => openModal('periodManage')} />
         
-        <StatsBar />
+        {(isAdminMode || isTeacherMode) && <StatsBar />}
 
         {/* Briefing Attendance Form */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200/90 p-5 space-y-4">
