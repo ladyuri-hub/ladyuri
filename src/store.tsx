@@ -156,7 +156,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
         if (data.briefingSubmissions) setBriefingSubmissions(data.briefingSubmissions);
 
-// AUTO BACKUP LOGIC (Hourly snapshot - Check if exists to prevent overwriting with bad data)
+// AUTO BACKUP LOGIC (Hourly snapshot - Only write once per hour to prevent bad overwrites)
         const now = new Date();
         const krTime = new Date(now.getTime() + (9 * 60 * 60 * 1000));
         const dateStr = krTime.toISOString().slice(0, 13); // "2026-09-04T09"
@@ -165,10 +165,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         // Prevent continuous overwriting within the same hour which could capture empty states
         if (typeof window !== 'undefined') {
           const lastBackup = localStorage.getItem('last_auto_backup');
-          if (lastBackup !== backupId && Object.keys(data.bookings || {}).length > 0) {
+          if (lastBackup !== backupId) {
             const backupRef = doc(db, 'backups', backupId);
-            // We set it only once per hour on this client, and only if we have some data (bookings)
-            setDoc(backupRef, { ...data, timestamp: Date.now(), label: `자동 백업 (${dateStr}시)` }, { merge: false }).then(() => {
+            setDoc(backupRef, { ...data, timestamp: Date.now(), label: `자동 백업 (${dateStr}시)` }).then(() => {
               localStorage.setItem('last_auto_backup', backupId);
             }).catch(() => {});
           }

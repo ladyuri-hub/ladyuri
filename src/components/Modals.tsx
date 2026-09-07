@@ -31,6 +31,7 @@ const BookingModal = ({ info, onClose }: any) => {
     }
 
     updateBookingSlot(currentClass, slotKey, { studentName, parentName, phone, password, type, note, createdAt: new Date().toLocaleString('ko-KR') });
+    localStorage.setItem('my_booking_' + currentClass, slotKey);
     addToast(`[${currentClass}] ${studentName} 학생 상담 신청이 완료되었습니다.`, 'success');
     onClose();
   };
@@ -117,6 +118,7 @@ const DetailModal = ({ info, onClose, onConfirmDelete }: any) => {
     if (booking.password === cancelPw) {
       if (confirm('정말로 본 상담 예약을 취소하시겠습니까?')) {
         removeBookingSlot(currentClass, slotKey);
+        localStorage.removeItem('my_booking_' + currentClass);
         addToast('상담 신청이 취소되었습니다.', 'success');
         onClose();
       }
@@ -128,6 +130,7 @@ const DetailModal = ({ info, onClose, onConfirmDelete }: any) => {
   const handleCancelTeacher = () => {
     if (confirm('담임/관리자 권한으로 본 예약을 삭제하시겠습니까?')) {
       removeBookingSlot(currentClass, slotKey);
+      localStorage.removeItem('my_booking_' + currentClass);
       addToast('예약 정보가 정상적으로 삭제되었습니다.', 'success');
       onClose();
     }

@@ -222,8 +222,8 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
 
     
   const totalBriefingResponses = activeBriefingEntries.length;
-  const totalBriefingAttending = activeBriefingEntries.filter((e: any) => e.status === '참석').length;
-  const totalBriefingNotAttending = activeBriefingEntries.filter((e: any) => e.status === '불참').length;
+  const totalBriefingAttending = activeBriefingEntries.filter((e: any) => String(e.status).includes('참석') && !String(e.status).includes('불참')).length;
+  const totalBriefingNotAttending = activeBriefingEntries.filter((e: any) => String(e.status).includes('불참')).length;
   
   const briefingStatsByClass: Record<string, { total: number, attending: number }> = {};
   if (isAdminMode) {
@@ -233,7 +233,7 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
              briefingStatsByClass[cls] = { total: 0, attending: 0 };
          }
          briefingStatsByClass[cls].total++;
-         if (e.status === '참석') {
+         if (String(e.status).includes('참석') && !String(e.status).includes('불참')) {
              briefingStatsByClass[cls].attending++;
          }
      });
@@ -261,43 +261,42 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
             <span className="text-amber-400">{titleText}</span> 통합 현황판
           </h3>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={onChangePassword} className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-amber-950 font-black rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
-            <Key className="w-4 h-4" /> 담임 비번 변경
-          </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center">
+            <button onClick={onChangePassword} className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-amber-950 font-black rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
+              <Key className="w-4 h-4" /> 담임 비번 변경
+            </button>
+          </div>
           
-                    <button onClick={onExport} className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
-            <FileSpreadsheet className="w-4 h-4" /> 명단 Excel 다운로드
-                    </button>
-          <button onClick={onPrint} className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
-            <Printer className="w-4 h-4" /> 상담 명단 인쇄
-          </button>
-          <button onClick={onExportBriefing} className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
-            <FileSpreadsheet className="w-4 h-4" /> 설명회 Excel 다운로드
-          </button>
-                    <button onClick={onPrintBriefing} className="px-3.5 py-2 bg-blue-500 hover:bg-blue-600 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
-            <Printer className="w-4 h-4" /> 설명회 명단 인쇄
-          </button>
-          {isAdminMode && (
-             <label className="cursor-pointer px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
-               <Upload className="w-4 h-4" /> 다운로드한 Excel로 복구
-               <input type="file" accept=".csv" multiple className="hidden" onChange={handleRestoreCSV} />
-             </label>
-          )}
-          <button onClick={onPrint} className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
-            <Printer className="w-4 h-4" /> 상담 명단 인쇄
-          </button>
-          <button onClick={onExportBriefing} className="px-3.5 py-2 bg-blue-500 hover:bg-blue-600 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
-            <FileSpreadsheet className="w-4 h-4" /> 설명회 명단 다운로드
-          </button>
-          {isAdminMode && (
-             <label className="cursor-pointer px-3.5 py-2 bg-rose-500 hover:bg-rose-600 text-white font-extrabold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
-               <Upload className="w-4 h-4" /> 설명회 Excel 복구
-               <input type="file" accept=".csv" multiple className="hidden" onChange={handleRestoreBriefingCSV} />
-             </label>
-          )}
+          <div className="flex items-center flex-wrap gap-2 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700 shadow-sm">
+            <button onClick={onExport} className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-lg text-xs transition flex items-center gap-1.5">
+              <FileSpreadsheet className="w-4 h-4" /> 상담 명단 Excel 다운로드
+            </button>
+            <button onClick={onPrint} className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-lg text-xs transition flex items-center gap-1.5">
+              <Printer className="w-4 h-4" /> 상담 명단 인쇄
+            </button>
+            {isAdminMode && (
+               <label className="cursor-pointer px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-extrabold rounded-lg text-xs transition flex items-center gap-1.5">
+                 <Upload className="w-4 h-4" /> 상담 Excel 복구
+                 <input type="file" accept=".csv" multiple className="hidden" onChange={handleRestoreCSV} />
+               </label>
+            )}
+          </div>
 
-          
+          <div className="flex items-center flex-wrap gap-2 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700 shadow-sm">
+            <button onClick={onExportBriefing} className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-lg text-xs transition flex items-center gap-1.5">
+              <FileSpreadsheet className="w-4 h-4" /> 설명회 Excel 다운로드
+            </button>
+            <button onClick={onPrintBriefing} className="px-3.5 py-1.5 bg-blue-500 hover:bg-blue-600 text-white font-extrabold rounded-lg text-xs transition flex items-center gap-1.5">
+              <Printer className="w-4 h-4" /> 설명회 명단 인쇄
+            </button>
+            {isAdminMode && (
+               <label className="cursor-pointer px-3.5 py-1.5 bg-rose-500 hover:bg-rose-600 text-white font-extrabold rounded-lg text-xs transition flex items-center gap-1.5">
+                 <Upload className="w-4 h-4" /> 설명회 Excel 복구
+                 <input type="file" accept=".csv" multiple className="hidden" onChange={handleRestoreBriefingCSV} />
+               </label>
+            )}
+          </div>
         </div>
       </div>
 
@@ -384,9 +383,9 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
                 <div className="text-[11px] text-slate-400 mb-0.5">총 응답자 수</div>
                 <div className="text-lg font-bold text-white">{totalBriefingResponses}<span className="text-sm font-normal text-slate-500">명</span></div>
               </div>
-              <div className="flex-1 bg-indigo-900/30 py-2 px-3 rounded-lg border border-indigo-700/50 text-center">
-                <div className="text-[11px] text-indigo-300 mb-0.5">총 참석 희망</div>
-                <div className="text-lg font-bold text-indigo-400">{totalBriefingAttending}<span className="text-sm font-normal text-indigo-500/50">명</span></div>
+              <div className="flex-1 bg-blue-900/30 py-2 px-3 rounded-lg border border-blue-700/50 text-center">
+                <div className="text-[11px] text-blue-300 mb-0.5">총 참석 희망</div>
+                <div className="text-lg font-bold text-blue-400">{totalBriefingAttending}<span className="text-sm font-normal text-blue-500/50">명</span></div>
               </div>
               <div className="flex-1 bg-rose-900/30 py-2 px-3 rounded-lg border border-rose-700/50 text-center">
                 <div className="text-[11px] text-rose-300 mb-0.5">불참</div>
@@ -402,7 +401,7 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
                     .sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true }))
                     .map(([cls, stats]) => (
                     <div key={cls} className="text-[11px] bg-slate-900 px-2 py-1 rounded-md border border-slate-700">
-                      <span className="font-bold text-slate-300">{cls}</span> <span className="text-indigo-400">{stats.attending}</span><span className="text-slate-500">/{stats.total}</span>
+                      <span className="font-bold text-slate-300">{cls}</span> <span className="text-blue-400">{stats.attending}</span><span className="text-slate-500">/{stats.total}</span>
                     </div>
                   ))}
                 </div>
@@ -428,17 +427,26 @@ export const TeacherPanel: React.FC<TeacherPanelProps> = ({ onChangePassword, on
                     </td>
                   </tr>
                 ) : (
-                  activeBriefingEntries.map((item, idx) => (
-                    <tr key={idx} className="border-b border-slate-800 hover:bg-slate-800/50 transition text-xs">
-                      <td className="p-3 font-bold text-white whitespace-nowrap">{item.key}</td>
-                      <td className="p-3 text-slate-300 whitespace-nowrap">{item.studentName || '-'}</td>
-                      <td className="p-3 whitespace-nowrap">
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${item.status === '참석' ? 'bg-indigo-900/80 text-indigo-200 border border-indigo-700' : 'bg-rose-900/80 text-rose-200 border border-rose-700'}`}>
-                          {item.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
+                  activeBriefingEntries.map((item, idx) => {
+                    const isAttending = String(item.status).includes('참석') && !String(item.status).includes('불참');
+                    const isNotAttending = String(item.status).includes('불참');
+                    
+                    let badgeColor = 'bg-slate-800 text-slate-300 border border-slate-700'; // Default gray
+                    if (isAttending) badgeColor = 'bg-blue-900/80 text-blue-200 border border-blue-700';
+                    else if (isNotAttending) badgeColor = 'bg-rose-900/80 text-rose-200 border border-rose-700';
+
+                    return (
+                      <tr key={idx} className="border-b border-slate-800 hover:bg-slate-800/50 transition text-xs">
+                        <td className="p-3 font-bold text-white whitespace-nowrap">{item.key}</td>
+                        <td className="p-3 text-slate-300 whitespace-nowrap">{item.studentName || '-'}</td>
+                        <td className="p-3 whitespace-nowrap">
+                          <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${badgeColor}`}>
+                            {item.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

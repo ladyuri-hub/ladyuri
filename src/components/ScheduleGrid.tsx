@@ -71,13 +71,12 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({ onOpenBooking, onOpe
                   const isDisabled = classDisabled[slotKey];
                   const timeLabel = t.split('~')[0].trim();
 
-                  if (booking) {
-                    const matchesSearch = (isAdminMode || isTeacherMode) && searchQuery && (
-                      booking.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      booking.parentName.toLowerCase().includes(searchQuery.toLowerCase())
-                    );
-
-                    if (isAdminMode || isTeacherMode) {
+                  if (isAdminMode || isTeacherMode) {
+                    if (booking) {
+                      const matchesSearch = searchQuery && (
+                        booking.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        booking.parentName.toLowerCase().includes(searchQuery.toLowerCase())
+                      );
                       return (
                         <div key={t} className={`p-2.5 ${matchesSearch ? 'ring-2 ring-indigo-500 bg-indigo-100' : 'bg-indigo-50 hover:bg-indigo-100'} border border-indigo-200 rounded-xl transition space-y-1`}>
                           <div className="cursor-pointer" onClick={() => onOpenDetail(d.date, d.label, t)}>
@@ -94,75 +93,95 @@ export const ScheduleGrid: React.FC<ScheduleGridProps> = ({ onOpenBooking, onOpe
                           </label>
                         </div>
                       );
-                    } else {
+                    } else if (isDisabled) {
                       return (
-                        <div key={t} onClick={() => onOpenDetail(d.date, d.label, t)} className="p-2.5 bg-slate-100 border border-slate-200 rounded-xl opacity-90 hover:opacity-100 cursor-pointer space-y-1">
+                        <div key={t} className="p-2.5 bg-rose-50/80 border border-rose-200 rounded-xl space-y-1.5">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="font-bold text-slate-500">{timeLabel}</span>
-                            <span className="px-1.5 py-0.5 bg-slate-200 text-slate-600 text-[10px] font-bold rounded flex items-center gap-1">
-                              <Lock className="w-2 h-2" /> 예약 완료
+                            <span className="font-bold text-rose-950 flex items-center gap-1">
+                              <Clock className="w-2.5 h-2.5 text-rose-400" /> {timeLabel}
                             </span>
+                            <span className="px-1.5 py-0.5 bg-rose-200 text-rose-800 text-[10px] font-bold rounded">상담 불가</span>
                           </div>
-                          <p className="text-[11px] text-slate-400 font-medium">신청 완료 (비공개)</p>
-                        </div>
-                      );
-                    }
-                  } else if (isDisabled) {
-                    return (
-                      <div key={t} className="p-2.5 bg-rose-50/80 border border-rose-200 rounded-xl space-y-1.5">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-rose-950 flex items-center gap-1">
-                            <Clock className="w-2.5 h-2.5 text-rose-400" /> {t.split('~')[0].trim()} ~ {t.split('~')[1].trim()}
-                          </span>
-                          <span className="px-1.5 py-0.5 bg-rose-200 text-rose-800 text-[10px] font-bold rounded">상담 불가</span>
-                        </div>
-                        <div className="py-1 text-center text-[11px] font-bold text-rose-400 bg-white/70 rounded-lg border border-rose-100">
-                          신청 비활성화됨
-                        </div>
-                        {(isAdminMode || isTeacherMode) && (
+                          <div className="py-1 text-center text-[11px] font-bold text-rose-400 bg-white/70 rounded-lg border border-rose-100">
+                            신청 비활성화됨
+                          </div>
                           <label className="flex items-center gap-1.5 text-[11px] text-slate-500 cursor-pointer pt-0.5">
                             <input type="checkbox" checked={true} onChange={() => toggleDisableSlot(d.date, t)} className="rounded accent-rose-500" />
                             <span>상담 불가(비활성화)</span>
                           </label>
-                        )}
-                      </div>
-                    );
-                  } else {
-                    return (
-                      <div key={t} className="p-2.5 bg-white border border-slate-200 rounded-xl flex flex-col justify-between space-y-2 hover:border-blue-400 hover:shadow-sm transition">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-slate-700 flex items-center gap-1">
-                            <Clock className="w-2.5 h-2.5 text-slate-400" /> {t.split('~')[0].trim()} ~ {t.split('~')[1].trim()}
-                          </span>
-                          <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded">신청 가능</span>
                         </div>
-                        <button 
-                          onClick={() => {
-                            const now = new Date();
-                            const openTime = new Date('2026-08-31T09:00:00+09:00'); // KST 9:00 AM
-                            const closeTime = new Date('2026-09-08T17:00:00+09:00'); // KST 5:00 PM
-                            if (!isAdminMode && !isTeacherMode && now.getTime() > closeTime.getTime()) {
-                              alert('상담 신청 기간이 종료되었습니다.'); addToast('상담 신청 기간이 종료되었습니다.', 'error');
-                              return;
-                            }
-                            if (!isAdminMode && !isTeacherMode && now.getTime() < openTime.getTime()) {
-                              alert('상담 신청은 8월 31일(월) 오전 9시부터 시작됩니다.'); addToast('상담 신청은 8월 31일(월) 오전 9시부터 시작됩니다.', 'error');
-                              return;
-                            }
-                            onOpenBooking(d.date, `${d.label} ${d.day}`, t);
-                          }} 
-                          className="w-full py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-lg border border-blue-100 transition flex items-center justify-center gap-1"
-                        >
-                          <Plus className="w-3 h-3" /> 시간 선택
-                        </button>
-                        {(isAdminMode || isTeacherMode) && (
-                           <label className="flex items-center gap-1.5 text-[11px] text-slate-500 cursor-pointer pt-1 border-t border-slate-100 mt-1">
-                             <input type="checkbox" checked={false} onChange={() => toggleDisableSlot(d.date, t)} className="rounded accent-rose-500" />
-                             <span>상담 불가(비활성화)</span>
-                           </label>
-                        )}
-                      </div>
-                    );
+                      );
+                    } else {
+                      return (
+                        <div key={t} className="p-2.5 bg-white border border-slate-200 rounded-xl flex flex-col justify-between space-y-2 hover:border-blue-400 hover:shadow-sm transition">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-slate-700 flex items-center gap-1">
+                              <Clock className="w-2.5 h-2.5 text-slate-400" /> {timeLabel}
+                            </span>
+                            <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded">신청 가능</span>
+                          </div>
+                          <button 
+                            onClick={() => onOpenBooking(d.date, `${d.label} ${d.day}`, t)} 
+                            className="w-full py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-lg border border-blue-100 transition flex items-center justify-center gap-1"
+                          >
+                            <Plus className="w-3 h-3" /> 시간 선택
+                          </button>
+                          <label className="flex items-center gap-1.5 text-[11px] text-slate-500 cursor-pointer pt-1 border-t border-slate-100 mt-1">
+                            <input type="checkbox" checked={false} onChange={() => toggleDisableSlot(d.date, t)} className="rounded accent-rose-500" />
+                            <span>상담 불가(비활성화)</span>
+                          </label>
+                        </div>
+                      );
+                    }
+                  } else {
+                    // Parent logic
+                    const now = new Date();
+                    const openTime = new Date('2026-08-31T09:00:00+09:00');
+                    const closeTime = new Date('2026-09-08T17:00:00+09:00');
+                    const isTimeClosed = now.getTime() > closeTime.getTime() || now.getTime() < openTime.getTime();
+                    
+                    const myBookedSlotKey = localStorage.getItem('my_booking_' + currentClass);
+                    const hasMyBooking = myBookedSlotKey && !!classBookings[myBookedSlotKey];
+
+                    if (hasMyBooking && slotKey === myBookedSlotKey) {
+                      return (
+                        <div key={t} onClick={() => onOpenDetail(d.date, d.label, t)} className="p-2.5 bg-blue-50 border border-blue-300 rounded-xl cursor-pointer space-y-2 transition shadow-sm hover:shadow-md hover:bg-blue-100">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-blue-900">{timeLabel}</span>
+                            <span className="px-1.5 py-0.5 bg-blue-600 text-white text-[10px] font-bold rounded">신청 완료</span>
+                          </div>
+                          <p className="text-[11px] text-blue-800 font-bold text-center">예약 내역 확인</p>
+                        </div>
+                      );
+                    } else if (booking || isDisabled || isTimeClosed || hasMyBooking) {
+                      return (
+                        <div key={t} className="p-2.5 bg-slate-100 border border-slate-200 rounded-xl opacity-70 space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-slate-500">{timeLabel}</span>
+                            <span className="px-1.5 py-0.5 bg-slate-300 text-slate-700 text-[10px] font-bold rounded flex items-center gap-1">
+                              <Lock className="w-2 h-2" /> 신청 마감
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <div key={t} className="p-2.5 bg-white border border-slate-200 rounded-xl flex flex-col justify-between space-y-2 hover:border-emerald-400 hover:shadow-sm transition">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-slate-700 flex items-center gap-1">
+                              <Clock className="w-2.5 h-2.5 text-slate-400" /> {timeLabel}
+                            </span>
+                            <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded">신청 가능</span>
+                          </div>
+                          <button 
+                            onClick={() => onOpenBooking(d.date, `${d.label} ${d.day}`, t)} 
+                            className="w-full py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-200 transition flex items-center justify-center gap-1"
+                          >
+                            <Plus className="w-3 h-3" /> 시간 선택
+                          </button>
+                        </div>
+                      );
+                    }
                   }
                 })}
               </div>
